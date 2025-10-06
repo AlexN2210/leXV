@@ -15,7 +15,7 @@ interface Arret {
 
 export const Localisation = () => {
   const [arrets, setArrets] = useState<Arret[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
 
   useEffect(() => {
     // Données statiques des arrêts
