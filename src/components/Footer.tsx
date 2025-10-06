@@ -18,7 +18,7 @@ export const Footer = ({ currentSection, onSectionChange }: FooterProps) => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Contact</h4>
             <div className="text-gray-300 text-sm space-y-2">
-              <p>Téléphone: 06 12 34 56 78</p>
+              <p>Téléphone: 06 85 84 30 20</p>
               <p>Email: contact@lexv.fr</p>
             </div>
           </div>
