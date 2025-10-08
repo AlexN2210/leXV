@@ -373,18 +373,32 @@ export const Commander = () => {
                     </div>
                   )}
 
-                  <div>
-                    <label className="block font-semibold mb-2">Date de Retrait *</label>
-                    <input
-                      type="date"
-                      required
-                      value={formData.dateRetrait}
-                      onChange={(e) =>
-                        setFormData({ ...formData, dateRetrait: e.target.value })
-                      }
-                      className="w-full border-2 border-black p-3"
-                    />
-                  </div>
+                  {formData.jour && (
+                    <div>
+                      <label className="block font-semibold mb-2">Date de Retrait *</label>
+                      <input
+                        type="date"
+                        required
+                        value={formData.dateRetrait}
+                        onChange={(e) => {
+                          const selectedDate = new Date(e.target.value);
+                          const dayOfWeek = selectedDate.getDay();
+                          const joursFr = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+                          
+                          if (joursFr[dayOfWeek] === formData.jour) {
+                            setFormData({ ...formData, dateRetrait: e.target.value });
+                          } else {
+                            alert(`Veuillez sélectionner un ${formData.jour}`);
+                          }
+                        }}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full border-2 border-black p-3"
+                      />
+                      <p className="text-sm text-gray-600 mt-1">
+                        Sélectionnez un {formData.jour}
+                      </p>
+                    </div>
+                  )}
 
                   {formData.jour && (
                     <div>
@@ -393,15 +407,24 @@ export const Commander = () => {
                         type="time"
                         required
                         value={formData.heureRetrait}
-                        onChange={(e) =>
-                          setFormData({ ...formData, heureRetrait: e.target.value })
-                        }
+                        onChange={(e) => {
+                          const selectedTime = e.target.value;
+                          const jourInfo = joursDisponibles.find(j => j.jour === formData.jour);
+                          
+                          if (jourInfo && selectedTime >= jourInfo.horaire_debut && selectedTime <= jourInfo.horaire_fin) {
+                            setFormData({ ...formData, heureRetrait: selectedTime });
+                          } else {
+                            alert(`L'heure doit être entre ${jourInfo?.horaire_debut} et ${jourInfo?.horaire_fin}`);
+                            setFormData({ ...formData, heureRetrait: '' });
+                          }
+                        }}
                         min={joursDisponibles.find(j => j.jour === formData.jour)?.horaire_debut}
                         max={joursDisponibles.find(j => j.jour === formData.jour)?.horaire_fin}
+                        step="900"
                         className="w-full border-2 border-black p-3"
                       />
                       <p className="text-sm text-gray-600 mt-1">
-                        Horaires disponibles : {joursDisponibles.find(j => j.jour === formData.jour)?.horaire_debut} - {joursDisponibles.find(j => j.jour === formData.jour)?.horaire_fin}
+                        Horaires disponibles : {joursDisponibles.find(j => j.jour === formData.jour)?.horaire_debut} - {joursDisponibles.find(j => j.jour === formData.jour)?.horaire_fin} (par tranches de 15 min)
                       </p>
                     </div>
                   )}
