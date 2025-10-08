@@ -437,20 +437,24 @@ export const Commander = () => {
                           const selectedTime = e.target.value;
                           const jourInfo = joursDisponibles.find(j => j.jour === formData.jour);
                           
-                          if (jourInfo && selectedTime >= jourInfo.horaire_debut && selectedTime <= jourInfo.horaire_fin) {
+                          // Convertir les heures au format HH:MM pour la comparaison
+                          const heureDebut = jourInfo?.horaire_debut?.substring(0, 5);
+                          const heureFin = jourInfo?.horaire_fin?.substring(0, 5);
+                          
+                          if (jourInfo && selectedTime >= heureDebut && selectedTime <= heureFin) {
                             setFormData({ ...formData, heureRetrait: selectedTime });
                           } else {
-                            alert(`L'heure doit être entre ${jourInfo?.horaire_debut} et ${jourInfo?.horaire_fin}`);
+                            alert(`L'heure doit être entre ${heureDebut} et ${heureFin}`);
                             setFormData({ ...formData, heureRetrait: '' });
                           }
                         }}
-                        min={joursDisponibles.find(j => j.jour === formData.jour)?.horaire_debut}
-                        max={joursDisponibles.find(j => j.jour === formData.jour)?.horaire_fin}
+                        min={joursDisponibles.find(j => j.jour === formData.jour)?.horaire_debut?.substring(0, 5)}
+                        max={joursDisponibles.find(j => j.jour === formData.jour)?.horaire_fin?.substring(0, 5)}
                         step="900"
                         className="w-full border-2 border-black p-3"
                       />
                       <p className="text-sm text-gray-600 mt-1">
-                        Horaires disponibles : {joursDisponibles.find(j => j.jour === formData.jour)?.horaire_debut} - {joursDisponibles.find(j => j.jour === formData.jour)?.horaire_fin} (par tranches de 15 min)
+                        Horaires disponibles : {joursDisponibles.find(j => j.jour === formData.jour)?.horaire_debut?.substring(0, 5)} - {joursDisponibles.find(j => j.jour === formData.jour)?.horaire_fin?.substring(0, 5)} (par tranches de 15 min)
                       </p>
                     </div>
                   )}
