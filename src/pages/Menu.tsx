@@ -1,75 +1,62 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ChefHat } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 
 interface MenuItem {
-  id: string;
   nom: string;
-  description: string;
-  prix: number;
-  image_url: string | null;
-  disponible: boolean;
-  ordre: number;
+  description?: string;
+  prix: string;
 }
 
 interface MenuCategory {
-  id: string;
   nom: string;
-  ordre: number;
   items: MenuItem[];
 }
 
 export const Menu = () => {
-  const [categories, setCategories] = useState<MenuCategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const menuData: MenuCategory[] = [
+    {
+      nom: 'Snacks',
+      items: [
+        { nom: 'Cornet d\'oignons frits', description: 'Maison', prix: '3€' },
+        { nom: 'Galette de pomme de terre', description: 'Pièce', prix: '3€' },
+        { nom: 'Beignet d\'aubergine', description: 'Pièce', prix: '3€' },
+        { nom: 'Frites fraîches', prix: '3€' },
+      ],
+    },
+    {
+      nom: 'Formules',
+      items: [
+        { nom: '4 Tenders "Maison" + Frites + Boisson', prix: '12€' },
+        { nom: '2 Hauts de cuisse frits "Mariné maison" + Frites + Boisson', prix: '12€' },
+        { nom: '6 Chicken drumsticks + Frites + Boisson', prix: '12€' },
+        { nom: 'Boîte Mix', description: '4 Tenders + 2 Hauts de cuisse + 6 Chicken drumsticks', prix: '20€' },
+        { nom: 'Supplément viande', prix: '4€' },
+      ],
+    },
+    {
+      nom: 'Menu Kids',
+      items: [
+        { nom: 'La boîte à LILY', description: '2 Tenders + Frites + POM\'POTE + Capri-Sun + Cadeau surprise', prix: '8€' },
+      ],
+    },
+    {
+      nom: 'Dessert',
+      items: [
+        { nom: 'Beignet long pomme ou chocolat', prix: '3€' },
+      ],
+    },
+    {
+      nom: 'Boissons',
+      items: [
+        { nom: 'Canette de soda 33cl', prix: '2€' },
+        { nom: 'Bouteille d\'eau 50cl', description: 'Plate ou gazeuse', prix: '1,50€' },
+      ],
+    },
+  ];
 
-  useEffect(() => {
-    fetchMenu();
-  }, []);
+  const [selectedCategory, setSelectedCategory] = useState<string>(menuData[0].nom);
 
-  const fetchMenu = async () => {
-    try {
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('menu_categories')
-        .select('*')
-        .order('ordre');
-
-      if (categoriesError) throw categoriesError;
-
-      const { data: itemsData, error: itemsError } = await supabase
-        .from('menu_items')
-        .select('*')
-        .eq('disponible', true)
-        .order('ordre');
-
-      if (itemsError) throw itemsError;
-
-      const categoriesWithItems = (categoriesData || []).map((category) => ({
-        ...category,
-        items: (itemsData || []).filter((item) => item.category_id === category.id),
-      }));
-
-      setCategories(categoriesWithItems);
-      if (categoriesWithItems.length > 0) {
-        setSelectedCategory(categoriesWithItems[0].id);
-      }
-    } catch (error) {
-      console.error('Erreur lors du chargement du menu:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-2xl text-black">Chargement du menu...</div>
-      </div>
-    );
-  }
-
-  const selectedCategoryData = categories.find((cat) => cat.id === selectedCategory);
+  const selectedCategoryData = menuData.find((cat) => cat.nom === selectedCategory);
 
   return (
     <div className="bg-white text-black py-20 px-4 min-h-screen">
@@ -78,18 +65,18 @@ export const Menu = () => {
           <ChefHat size={64} className="mx-auto mb-6" />
           <h1 className="text-5xl md:text-6xl font-bold mb-4">Notre Menu</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Découvrez notre sélection de burgers artisanaux, snacks savoureux et boissons
+            Découvrez notre sélection de snacks savoureux, formules gourmandes et boissons
             rafraîchissantes, préparés avec des ingrédients frais de qualité.
           </p>
         </div>
 
         <div className="flex flex-wrap justify-center gap-4 mb-12">
-          {categories.map((category) => (
+          {menuData.map((category) => (
             <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
+              key={category.nom}
+              onClick={() => setSelectedCategory(category.nom)}
               className={`px-8 py-3 text-lg font-semibold transition-all duration-300 border-2 ${
-                selectedCategory === category.id
+                selectedCategory === category.nom
                   ? 'bg-black text-white border-black'
                   : 'bg-white text-black border-black hover:bg-gray-100'
               }`}
@@ -100,49 +87,33 @@ export const Menu = () => {
         </div>
 
         {selectedCategoryData && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {selectedCategoryData.items.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white border-4 border-black overflow-hidden hover:shadow-2xl transition-shadow duration-300 group"
-              >
-                {item.image_url && (
-                  <div className="aspect-video overflow-hidden bg-gray-200">
-                    <img
-                      src={item.image_url}
-                      alt={item.nom}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+              {selectedCategoryData.items.map((item, index) => (
+                <div
+                  key={index}
+                  className="bg-white border-4 border-black overflow-hidden hover:shadow-2xl transition-shadow duration-300 group"
+                >
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-3">
+                      <h3 className="text-2xl font-bold flex-1">{item.nom}</h3>
+                      <span className="text-2xl font-bold whitespace-nowrap ml-4">
+                        {item.prix}
+                      </span>
+                    </div>
+                    {item.description && (
+                      <p className="text-gray-600 leading-relaxed italic">{item.description}</p>
+                    )}
                   </div>
-                )}
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-2xl font-bold">{item.nom}</h3>
-                    <span className="text-2xl font-bold whitespace-nowrap ml-4">
-                      {item.prix.toFixed(2)}€
-                    </span>
-                  </div>
-                  {item.description && (
-                    <p className="text-gray-600 leading-relaxed">{item.description}</p>
-                  )}
                 </div>
+              ))}
+            </div>
+
+            {selectedCategory === 'Formules' && (
+              <div className="text-center bg-black text-white p-8 border-4 border-black">
+                <p className="text-xl font-semibold">🍟 Nombreuses sauces aux choix 🍟</p>
               </div>
-            ))}
-          </div>
-        )}
-
-        {selectedCategoryData && selectedCategoryData.items.length === 0 && (
-          <div className="text-center py-20">
-            <p className="text-xl text-gray-600">Aucun plat disponible dans cette catégorie.</p>
-          </div>
-        )}
-
-        {categories.length === 0 && (
-          <div className="text-center py-20">
-            <ChefHat size={64} className="mx-auto mb-6 text-gray-400" />
-            <p className="text-xl text-gray-600">
-              Le menu est en cours de préparation. Revenez bientôt !
-            </p>
+            )}
           </div>
         )}
       </div>
