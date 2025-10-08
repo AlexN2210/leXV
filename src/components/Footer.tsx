@@ -26,8 +26,8 @@ export const Footer = ({ currentSection, onSectionChange }: FooterProps) => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Horaires</h4>
             <div className="text-gray-300 text-sm space-y-1">
-              <p>Lundi - Vendredi</p>
-              <p>12h00 - 14h00</p>
+              <p>Mardi - Vendredi</p>
+              <p>18h00 - 22h00</p>
             </div>
           </div>
         </div>
