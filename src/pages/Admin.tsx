@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Lock, LogOut, Package, CheckCircle, Clock, X } from 'lucide-react';
+import { Lock, LogOut, Package, CheckCircle, Clock, X, Settings, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { GestionAdmins } from '../components/admin/GestionAdmins';
+import { GestionArrets } from '../components/admin/GestionArrets';
+import { GestionHoraires } from '../components/admin/GestionHoraires';
+import { GestionMenu } from '../components/admin/GestionMenu';
 
 interface CommandeItem {
   id: string;
@@ -37,6 +41,7 @@ export const Admin = () => {
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<string>('tous');
+  const [activeTab, setActiveTab] = useState<'commandes' | 'parametres'>('commandes');
 
   useEffect(() => {
     if (user) {
@@ -207,8 +212,8 @@ export const Admin = () => {
       <div className="container mx-auto max-w-7xl">
         <div className="flex justify-between items-center mb-12">
           <div>
-            <h1 className="text-5xl font-bold mb-2">Backoffice Admin</h1>
-            <p className="text-gray-600">Gestion des commandes</p>
+            <h1 className="text-5xl font-bold mb-2">LE XV - Backoffice</h1>
+            <p className="text-gray-600">Administration</p>
           </div>
           <button
             onClick={() => signOut()}
@@ -219,48 +224,77 @@ export const Admin = () => {
           </button>
         </div>
 
-        <div className="mb-8 flex flex-wrap gap-4">
+        {/* Onglets */}
+        <div className="mb-8 flex gap-4 border-b-4 border-black">
           <button
-            onClick={() => setFilter('tous')}
-            className={`px-6 py-3 font-semibold border-2 transition-colors ${
-              filter === 'tous'
-                ? 'bg-black text-white border-black'
-                : 'bg-white text-black border-black hover:bg-gray-100'
+            onClick={() => setActiveTab('commandes')}
+            className={`flex items-center gap-2 px-8 py-4 font-bold text-lg transition-colors ${
+              activeTab === 'commandes'
+                ? 'bg-black text-white'
+                : 'bg-white text-black hover:bg-gray-100'
             }`}
           >
-            Toutes ({commandes.length})
+            <ShoppingBag size={24} />
+            Gestion des Commandes
           </button>
           <button
-            onClick={() => setFilter('en_attente')}
-            className={`px-6 py-3 font-semibold border-2 transition-colors ${
-              filter === 'en_attente'
-                ? 'bg-black text-white border-black'
-                : 'bg-white text-black border-black hover:bg-gray-100'
+            onClick={() => setActiveTab('parametres')}
+            className={`flex items-center gap-2 px-8 py-4 font-bold text-lg transition-colors ${
+              activeTab === 'parametres'
+                ? 'bg-black text-white'
+                : 'bg-white text-black hover:bg-gray-100'
             }`}
           >
-            En Attente ({commandes.filter((c) => c.statut === 'en_attente').length})
-          </button>
-          <button
-            onClick={() => setFilter('en_preparation')}
-            className={`px-6 py-3 font-semibold border-2 transition-colors ${
-              filter === 'en_preparation'
-                ? 'bg-black text-white border-black'
-                : 'bg-white text-black border-black hover:bg-gray-100'
-            }`}
-          >
-            En Préparation ({commandes.filter((c) => c.statut === 'en_preparation').length})
-          </button>
-          <button
-            onClick={() => setFilter('prete')}
-            className={`px-6 py-3 font-semibold border-2 transition-colors ${
-              filter === 'prete'
-                ? 'bg-black text-white border-black'
-                : 'bg-white text-black border-black hover:bg-gray-100'
-            }`}
-          >
-            Prêtes ({commandes.filter((c) => c.statut === 'prete').length})
+            <Settings size={24} />
+            Paramètres
           </button>
         </div>
+
+        {/* Contenu de l'onglet Commandes */}
+        {activeTab === 'commandes' && (
+          <>
+            <div className="mb-8 flex flex-wrap gap-4">
+              <button
+                onClick={() => setFilter('tous')}
+                className={`px-6 py-3 font-semibold border-2 transition-colors ${
+                  filter === 'tous'
+                    ? 'bg-black text-white border-black'
+                    : 'bg-white text-black border-black hover:bg-gray-100'
+                }`}
+              >
+                Toutes ({commandes.length})
+              </button>
+              <button
+                onClick={() => setFilter('en_attente')}
+                className={`px-6 py-3 font-semibold border-2 transition-colors ${
+                  filter === 'en_attente'
+                    ? 'bg-black text-white border-black'
+                    : 'bg-white text-black border-black hover:bg-gray-100'
+                }`}
+              >
+                En Attente ({commandes.filter((c) => c.statut === 'en_attente').length})
+              </button>
+              <button
+                onClick={() => setFilter('en_preparation')}
+                className={`px-6 py-3 font-semibold border-2 transition-colors ${
+                  filter === 'en_preparation'
+                    ? 'bg-black text-white border-black'
+                    : 'bg-white text-black border-black hover:bg-gray-100'
+                }`}
+              >
+                En Préparation ({commandes.filter((c) => c.statut === 'en_preparation').length})
+              </button>
+              <button
+                onClick={() => setFilter('prete')}
+                className={`px-6 py-3 font-semibold border-2 transition-colors ${
+                  filter === 'prete'
+                    ? 'bg-black text-white border-black'
+                    : 'bg-white text-black border-black hover:bg-gray-100'
+                }`}
+              >
+                Prêtes ({commandes.filter((c) => c.statut === 'prete').length})
+              </button>
+            </div>
 
         {loading ? (
           <div className="text-center py-20">
@@ -362,6 +396,28 @@ export const Admin = () => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+          </>
+        )}
+
+        {/* Contenu de l'onglet Paramètres */}
+        {activeTab === 'parametres' && (
+          <div className="space-y-8">
+            <h2 className="text-3xl font-bold mb-6">Paramètres et Configuration</h2>
+            <p className="text-gray-600 mb-8">Gérez les paramètres de votre food truck</p>
+            
+            {/* Gestion des Admins */}
+            <GestionAdmins />
+
+            {/* Gestion des Arrêts */}
+            <GestionArrets />
+
+            {/* Gestion des Horaires */}
+            <GestionHoraires />
+
+            {/* Gestion du Menu */}
+            <GestionMenu />
           </div>
         )}
       </div>
