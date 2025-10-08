@@ -21,16 +21,16 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/icon.svg',
+            src: '/1000044178 (1).jpg',
             sizes: '192x192',
-            type: 'image/svg+xml',
+            type: 'image/jpeg',
             purpose: 'any'
           },
           {
-            src: '/icon.svg',
+            src: '/1000044178 (1).jpg',
             sizes: '512x512',
-            type: 'image/svg+xml',
-            purpose: 'any'
+            type: 'image/jpeg',
+            purpose: 'any maskable'
           }
         ]
       },
