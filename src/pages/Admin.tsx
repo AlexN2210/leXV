@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Lock, LogOut, Package, CheckCircle, Clock, X, Settings, ShoppingBag, Download } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Lock, LogOut, Package, CheckCircle, Clock, X, Settings, ShoppingBag, Download, Bell, TrendingUp } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { GestionAdmins } from '../components/admin/GestionAdmins';
@@ -7,7 +7,9 @@ import { GestionArrets } from '../components/admin/GestionArrets';
 import { GestionHoraires } from '../components/admin/GestionHoraires';
 import { GestionMenu } from '../components/admin/GestionMenu';
 import { GestionContacts } from '../components/admin/GestionContacts';
+import { Financier } from '../components/admin/Financier';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import { demanderPermissionNotifications, notifierNouvelleCommande, notifierNouveauContact, jouerSonNotification } from '../lib/notifications';
 
 interface CommandeItem {
   id: string;
@@ -44,34 +46,66 @@ export const Admin = () => {
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<string>('tous');
-  const [activeTab, setActiveTab] = useState<'commandes' | 'parametres'>('commandes');
+  const [activeTab, setActiveTab] = useState<'commandes' | 'parametres' | 'financier'>('commandes');
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const commandesCountRef = useRef<number>(0);
+  const contactsCountRef = useRef<number>(0);
 
   useEffect(() => {
     if (user) {
       fetchCommandes();
+      initNotifications();
       
       // Rafraîchissement automatique toutes les 10 secondes
       const interval = setInterval(() => {
         fetchCommandes();
       }, 10000);
 
-      // Écouter les changements en temps réel
-      const channel = supabase
+      // Écouter les changements en temps réel pour les commandes
+      const commandesChannel = supabase
         .channel('commandes-changes')
         .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'commandes' }, 
-          () => {
+          { event: 'INSERT', schema: 'public', table: 'commandes' }, 
+          (payload) => {
             fetchCommandes();
+            // Notifier nouvelle commande
+            if (notificationsEnabled && payload.new) {
+              const commande = payload.new as any;
+              notifierNouvelleCommande(commande.client_nom, commande.montant_total);
+              jouerSonNotification();
+            }
+          }
+        )
+        .subscribe();
+
+      // Écouter les changements en temps réel pour les contacts
+      const contactsChannel = supabase
+        .channel('contacts-changes')
+        .on('postgres_changes', 
+          { event: 'INSERT', schema: 'public', table: 'demandes_contact' }, 
+          (payload) => {
+            // Notifier nouveau contact
+            if (notificationsEnabled && payload.new) {
+              const contact = payload.new as any;
+              notifierNouveauContact(contact.nom, contact.type_evenement);
+              jouerSonNotification();
+            }
           }
         )
         .subscribe();
 
       return () => {
         clearInterval(interval);
-        channel.unsubscribe();
+        commandesChannel.unsubscribe();
+        contactsChannel.unsubscribe();
       };
     }
-  }, [user]);
+  }, [user, notificationsEnabled]);
+
+  const initNotifications = async () => {
+    const hasPermission = await demanderPermissionNotifications();
+    setNotificationsEnabled(hasPermission);
+  };
 
   const fetchCommandes = async () => {
     setLoading(true);
@@ -261,21 +295,32 @@ export const Admin = () => {
         </div>
 
         {/* Onglets */}
-        <div className="mb-8 flex gap-4 border-b-4 border-black">
+        <div className="mb-8 flex gap-4 border-b-4 border-black overflow-x-auto">
           <button
             onClick={() => setActiveTab('commandes')}
-            className={`flex items-center gap-2 px-8 py-4 font-bold text-lg transition-colors ${
+            className={`flex items-center gap-2 px-8 py-4 font-bold text-lg transition-colors whitespace-nowrap ${
               activeTab === 'commandes'
                 ? 'bg-black text-white'
                 : 'bg-white text-black hover:bg-gray-100'
             }`}
           >
             <ShoppingBag size={24} />
-            Gestion des Commandes
+            Commandes
+          </button>
+          <button
+            onClick={() => setActiveTab('financier')}
+            className={`flex items-center gap-2 px-8 py-4 font-bold text-lg transition-colors whitespace-nowrap ${
+              activeTab === 'financier'
+                ? 'bg-black text-white'
+                : 'bg-white text-black hover:bg-gray-100'
+            }`}
+          >
+            <TrendingUp size={24} />
+            Financier
           </button>
           <button
             onClick={() => setActiveTab('parametres')}
-            className={`flex items-center gap-2 px-8 py-4 font-bold text-lg transition-colors ${
+            className={`flex items-center gap-2 px-8 py-4 font-bold text-lg transition-colors whitespace-nowrap ${
               activeTab === 'parametres'
                 ? 'bg-black text-white'
                 : 'bg-white text-black hover:bg-gray-100'
@@ -489,12 +534,68 @@ export const Admin = () => {
           </>
         )}
 
+        {/* Contenu de l'onglet Financier */}
+        {activeTab === 'financier' && (
+          <div>
+            <h2 className="text-3xl font-bold mb-6">Statistiques Financières</h2>
+            <Financier />
+          </div>
+        )}
+
         {/* Contenu de l'onglet Paramètres */}
         {activeTab === 'parametres' && (
           <div className="space-y-8">
             <h2 className="text-3xl font-bold mb-6">Paramètres et Configuration</h2>
             <p className="text-gray-600 mb-8">Gérez les paramètres de votre food truck</p>
             
+            {/* Carte Notifications */}
+            <div className="border-4 border-black p-6 bg-gradient-to-r from-yellow-50 to-orange-50">
+              <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                <Bell size={28} />
+                Notifications Push
+              </h3>
+              <p className="text-gray-700 mb-4">
+                Activez les notifications pour être alerté en temps réel des nouvelles commandes et demandes de contact.
+              </p>
+              
+              {notificationsEnabled ? (
+                <div className="bg-green-100 border-2 border-green-600 p-4 text-green-800">
+                  <p className="font-semibold">✓ Notifications activées</p>
+                  <p className="text-sm mt-2">Vous recevrez une alerte à chaque nouvelle commande ou demande de contact.</p>
+                  <button
+                    onClick={async () => {
+                      const hasPermission = await demanderPermissionNotifications();
+                      setNotificationsEnabled(hasPermission);
+                    }}
+                    className="mt-3 bg-green-700 text-white px-4 py-2 font-semibold hover:bg-green-800 text-sm"
+                  >
+                    Vérifier les Permissions
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <button
+                    onClick={async () => {
+                      const hasPermission = await demanderPermissionNotifications();
+                      setNotificationsEnabled(hasPermission);
+                      if (hasPermission) {
+                        alert('✅ Notifications activées ! Vous recevrez maintenant des alertes pour les nouvelles commandes et contacts.');
+                      } else {
+                        alert('❌ Permission refusée. Activez les notifications dans les paramètres de votre navigateur.');
+                      }
+                    }}
+                    className="flex items-center gap-2 bg-orange-600 text-white px-8 py-4 text-lg font-semibold hover:bg-orange-700 transition-colors"
+                  >
+                    <Bell size={24} />
+                    Activer les Notifications
+                  </button>
+                  <p className="text-xs text-gray-600 mt-3">
+                    * Votre navigateur vous demandera la permission d'envoyer des notifications
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/* Carte PWA Installation */}
             <div className="border-4 border-black p-6 bg-gradient-to-r from-green-50 to-blue-50">
               <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
