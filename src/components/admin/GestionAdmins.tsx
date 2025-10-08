@@ -1,23 +1,66 @@
-import { useState } from 'react';
-import { UserPlus, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { UserPlus, Trash2, Shield } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+
+interface Admin {
+  id: string;
+  email: string;
+  created_at: string;
+  last_sign_in_at: string | null;
+}
 
 export const GestionAdmins = () => {
+  const [admins, setAdmins] = useState<Admin[]>([]);
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [newAdminPassword, setNewAdminPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchAdmins();
+  }, []);
+
+  const fetchAdmins = async () => {
+    try {
+      // Récupérer les utilisateurs via la table auth.users (lecture seule)
+      const { data, error } = await supabase.rpc('get_admin_users');
+      
+      if (error) {
+        console.log('Impossible de récupérer la liste des admins via RPC');
+        // On affiche un message mais ça n'empêche pas le fonctionnement
+      } else {
+        setAdmins(data || []);
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+    }
+  };
 
   const handleAddAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
     try {
-      // TODO: Implémenter l'ajout d'admin via Supabase Admin API
-      alert('Fonctionnalité à venir : Ajout d\'admin');
+      const { data, error } = await supabase.auth.signUp({
+        email: newAdminEmail,
+        password: newAdminPassword,
+        options: {
+          emailRedirectTo: undefined,
+        }
+      });
+
+      if (error) throw error;
+
+      alert(`Admin créé avec succès ! Email: ${newAdminEmail}`);
       setNewAdminEmail('');
       setNewAdminPassword('');
-    } catch (error) {
+      await fetchAdmins();
+    } catch (error: any) {
       console.error('Erreur lors de l\'ajout d\'admin:', error);
-      alert('Erreur lors de l\'ajout de l\'admin');
+      if (error.message?.includes('already registered')) {
+        alert('Cet email est déjà enregistré');
+      } else {
+        alert('Erreur lors de l\'ajout de l\'admin: ' + error.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -65,9 +108,36 @@ export const GestionAdmins = () => {
         </button>
       </form>
 
-      <div className="bg-gray-50 border-2 border-gray-300 p-4 text-sm text-gray-600">
-        <p className="font-semibold mb-2">ℹ️ Information importante :</p>
-        <p>Pour ajouter ou supprimer des administrateurs, utilisez le Dashboard Supabase :</p>
+      {admins.length > 0 && (
+        <div className="mt-6">
+          <h4 className="font-bold text-lg mb-4">Administrateurs existants :</h4>
+          <div className="space-y-2">
+            {admins.map((admin) => (
+              <div key={admin.id} className="flex justify-between items-center border-2 border-gray-300 p-3 bg-gray-50">
+                <div>
+                  <p className="font-semibold">{admin.email}</p>
+                  <p className="text-sm text-gray-600">
+                    Créé le: {new Date(admin.created_at).toLocaleDateString('fr-FR')}
+                  </p>
+                  {admin.last_sign_in_at && (
+                    <p className="text-sm text-gray-500">
+                      Dernière connexion: {new Date(admin.last_sign_in_at).toLocaleDateString('fr-FR')}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Shield className="text-green-600" size={20} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-6 bg-blue-50 border-2 border-blue-300 p-4 text-sm">
+        <p className="font-semibold mb-2">ℹ️ Information :</p>
+        <p>Les nouveaux administrateurs recevront un email de confirmation automatiquement.</p>
+        <p className="mt-2">Pour supprimer un admin, utilisez le Dashboard Supabase :</p>
         <a 
           href="https://supabase.com/dashboard/project/wbdxpoiisfgzszegbxns/auth/users"
           target="_blank"
