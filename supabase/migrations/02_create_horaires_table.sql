@@ -10,11 +10,13 @@ CREATE TABLE IF NOT EXISTS horaires (
 
 ALTER TABLE horaires ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Lecture publique des horaires" ON horaires;
 CREATE POLICY "Lecture publique des horaires"
   ON horaires FOR SELECT
   TO anon, authenticated
   USING (true);
 
+DROP POLICY IF EXISTS "Admin peut modifier les horaires" ON horaires;
 CREATE POLICY "Admin peut modifier les horaires"
   ON horaires FOR ALL
   TO authenticated
@@ -30,4 +32,5 @@ INSERT INTO horaires (jour, horaire_debut, horaire_fin, actif) VALUES
   ('Samedi', '18:00', '22:00', false),
   ('Dimanche', '18:00', '22:00', false)
 ON CONFLICT (jour) DO NOTHING;
+
 
