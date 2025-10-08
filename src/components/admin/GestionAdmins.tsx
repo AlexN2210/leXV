@@ -45,33 +45,19 @@ export const GestionAdmins = () => {
     setLoading(true);
     
     try {
-      // 1. Créer dans la table admins (notre table custom)
+      // Créer uniquement dans notre table admins (pas dans Supabase Auth)
       const { error: adminError } = await supabase
         .from('admins')
         .insert([{
           email: newAdminEmail,
-          password_hash: newAdminPassword, // Note: sera crypté par un trigger
+          password_hash: newAdminPassword,
           actif: true
         }]);
 
       if (adminError) throw adminError;
 
-      // 2. Créer aussi dans Supabase Auth
-      const { error: authError } = await supabase.auth.signUp({
-        email: newAdminEmail,
-        password: newAdminPassword,
-        options: {
-          data: {
-            role: 'admin'
-          }
-        }
-      });
-
-      if (authError) {
-        console.warn('Erreur auth (mais admin créé dans la table):', authError);
-      }
-
-      alert(`Admin créé avec succès !\nEmail: ${newAdminEmail}\nMot de passe: ${newAdminPassword}\n\nCopiez ces identifiants !`);
+      alert(`✅ Admin créé avec succès !\n\n📧 Email: ${newAdminEmail}\n🔑 Mot de passe: ${newAdminPassword}\n\n⚠️ IMPORTANT: Copiez ces identifiants maintenant !\n\nL'admin doit aussi être créé manuellement dans Supabase Auth:\n1. Allez sur Dashboard → Authentication → Users\n2. Cliquez "Add User"\n3. Utilisez le même email et mot de passe\n4. Cochez "Auto Confirm User"`);
+      
       setNewAdminEmail('');
       setNewAdminPassword('');
       await fetchAdmins();
@@ -188,11 +174,16 @@ export const GestionAdmins = () => {
         </div>
       )}
 
-      <div className="mt-6 bg-blue-50 border-2 border-blue-300 p-4 text-sm">
-        <p className="font-semibold mb-2">ℹ️ Information :</p>
-        <p>Les nouveaux administrateurs pourront se connecter immédiatement après création.</p>
-        <p className="mt-2">⚠️ Notez bien le mot de passe lors de la création, il ne sera plus affiché ensuite.</p>
-        <p className="mt-2">🔒 L'admin principal (admin@lexv.fr) ne peut pas être supprimé.</p>
+      <div className="mt-6 bg-yellow-50 border-2 border-yellow-600 p-4 text-sm">
+        <p className="font-semibold mb-2">⚠️ Procédure pour ajouter un admin :</p>
+        <ol className="list-decimal list-inside space-y-1 text-yellow-900">
+          <li>Remplissez le formulaire ci-dessus et cliquez sur "Ajouter un Admin"</li>
+          <li>Copiez l'email et le mot de passe affichés dans l'alerte</li>
+          <li>Allez sur le <a href="https://supabase.com/dashboard/project/wbdxpoiisfgzszegbxns/auth/users" target="_blank" className="text-blue-600 underline">Dashboard Supabase</a></li>
+          <li>Cliquez sur "Add User" et utilisez le même email/mot de passe</li>
+          <li>Cochez "Auto Confirm User" puis créez l'utilisateur</li>
+        </ol>
+        <p className="mt-3 font-semibold">🔒 L'admin principal (admin@lexv.fr) ne peut pas être supprimé.</p>
       </div>
     </div>
   );
