@@ -21,15 +21,20 @@ export const GestionAdmins = () => {
 
   const fetchAdmins = async () => {
     try {
-      // Récupérer les utilisateurs via la table auth.users (lecture seule)
-      const { data, error } = await supabase.rpc('get_admin_users');
+      const { data, error } = await supabase
+        .from('admins')
+        .select('id, email, created_at, last_login_at')
+        .eq('actif', true)
+        .order('created_at', { ascending: false });
       
-      if (error) {
-        console.log('Impossible de récupérer la liste des admins via RPC');
-        // On affiche un message mais ça n'empêche pas le fonctionnement
-      } else {
-        setAdmins(data || []);
-      }
+      if (error) throw error;
+      
+      setAdmins(data?.map(d => ({
+        id: d.id,
+        email: d.email,
+        created_at: d.created_at,
+        last_sign_in_at: d.last_login_at
+      })) || []);
     } catch (error) {
       console.error('Erreur:', error);
     }
@@ -40,29 +45,69 @@ export const GestionAdmins = () => {
     setLoading(true);
     
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // 1. Créer dans la table admins (notre table custom)
+      const { error: adminError } = await supabase
+        .from('admins')
+        .insert([{
+          email: newAdminEmail,
+          password_hash: newAdminPassword, // Note: sera crypté par un trigger
+          actif: true
+        }]);
+
+      if (adminError) throw adminError;
+
+      // 2. Créer aussi dans Supabase Auth
+      const { error: authError } = await supabase.auth.signUp({
         email: newAdminEmail,
         password: newAdminPassword,
         options: {
-          emailRedirectTo: undefined,
+          data: {
+            role: 'admin'
+          }
         }
       });
 
-      if (error) throw error;
+      if (authError) {
+        console.warn('Erreur auth (mais admin créé dans la table):', authError);
+      }
 
-      alert(`Admin créé avec succès ! Email: ${newAdminEmail}`);
+      alert(`Admin créé avec succès !\nEmail: ${newAdminEmail}\nMot de passe: ${newAdminPassword}\n\nCopiez ces identifiants !`);
       setNewAdminEmail('');
       setNewAdminPassword('');
       await fetchAdmins();
     } catch (error: any) {
       console.error('Erreur lors de l\'ajout d\'admin:', error);
-      if (error.message?.includes('already registered')) {
+      if (error.message?.includes('duplicate key')) {
         alert('Cet email est déjà enregistré');
       } else {
         alert('Erreur lors de l\'ajout de l\'admin: ' + error.message);
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteAdmin = async (id: string, email: string) => {
+    if (email === 'admin@lexv.fr') {
+      alert('Impossible de supprimer l\'admin principal !');
+      return;
+    }
+
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer l'admin ${email} ?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('admins')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      alert('Admin supprimé avec succès !');
+      await fetchAdmins();
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('Erreur lors de la suppression');
     }
   };
 
@@ -127,6 +172,15 @@ export const GestionAdmins = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Shield className="text-green-600" size={20} />
+                  {admin.email !== 'admin@lexv.fr' && (
+                    <button
+                      onClick={() => handleDeleteAdmin(admin.id, admin.email)}
+                      className="bg-red-600 text-white p-2 hover:bg-red-700"
+                      title="Supprimer"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -136,16 +190,9 @@ export const GestionAdmins = () => {
 
       <div className="mt-6 bg-blue-50 border-2 border-blue-300 p-4 text-sm">
         <p className="font-semibold mb-2">ℹ️ Information :</p>
-        <p>Les nouveaux administrateurs recevront un email de confirmation automatiquement.</p>
-        <p className="mt-2">Pour supprimer un admin, utilisez le Dashboard Supabase :</p>
-        <a 
-          href="https://supabase.com/dashboard/project/wbdxpoiisfgzszegbxns/auth/users"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 underline hover:text-blue-800"
-        >
-          Gérer les utilisateurs →
-        </a>
+        <p>Les nouveaux administrateurs pourront se connecter immédiatement après création.</p>
+        <p className="mt-2">⚠️ Notez bien le mot de passe lors de la création, il ne sera plus affiché ensuite.</p>
+        <p className="mt-2">🔒 L'admin principal (admin@lexv.fr) ne peut pas être supprimé.</p>
       </div>
     </div>
   );
