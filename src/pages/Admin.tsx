@@ -6,6 +6,7 @@ import { GestionAdmins } from '../components/admin/GestionAdmins';
 import { GestionArrets } from '../components/admin/GestionArrets';
 import { GestionHoraires } from '../components/admin/GestionHoraires';
 import { GestionMenu } from '../components/admin/GestionMenu';
+import { GestionContacts } from '../components/admin/GestionContacts';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 
 interface CommandeItem {
@@ -494,6 +495,9 @@ export const Admin = () => {
             <h2 className="text-3xl font-bold mb-6">Paramètres et Configuration</h2>
             <p className="text-gray-600 mb-8">Gérez les paramètres de votre food truck</p>
             
+            {/* Gestion des Demandes de Contact */}
+            <GestionContacts />
+
             {/* Gestion des Admins */}
             <GestionAdmins />
 

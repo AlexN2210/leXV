@@ -1,6 +1,10 @@
-import { Truck, Clock, MapPin, Star } from 'lucide-react';
+import { Truck, Clock, MapPin, Star, ChefHat, ShoppingCart, Mail } from 'lucide-react';
 
-export const Accueil = () => {
+interface AccueilProps {
+  onSectionChange?: (section: string) => void;
+}
+
+export const Accueil = ({ onSectionChange }: AccueilProps) => {
   const photos = [
     '/1000044178 (1).jpg',
     '/1000044205.jpg',
@@ -79,6 +83,53 @@ export const Accueil = () => {
                 Plusieurs emplacements dans la ville pour vous servir facilement
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 px-4 bg-white">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16">Accès Rapide</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+            {/* Card Localisation */}
+            <button
+              onClick={() => onSectionChange?.('localisation')}
+              className="border-4 border-black p-8 hover:bg-black hover:text-white transition-all duration-300 group cursor-pointer"
+            >
+              <MapPin size={48} className="mx-auto mb-4 group-hover:scale-110 transition-transform" />
+              <h3 className="text-2xl font-bold mb-2">Localisation</h3>
+              <p className="text-sm">Où nous trouver</p>
+            </button>
+
+            {/* Card Menu */}
+            <button
+              onClick={() => onSectionChange?.('menu')}
+              className="border-4 border-black p-8 hover:bg-black hover:text-white transition-all duration-300 group cursor-pointer"
+            >
+              <ChefHat size={48} className="mx-auto mb-4 group-hover:scale-110 transition-transform" />
+              <h3 className="text-2xl font-bold mb-2">Menu</h3>
+              <p className="text-sm">Découvrez nos plats</p>
+            </button>
+
+            {/* Card Commander */}
+            <button
+              onClick={() => onSectionChange?.('commander')}
+              className="border-4 border-black p-8 hover:bg-black hover:text-white transition-all duration-300 group cursor-pointer"
+            >
+              <ShoppingCart size={48} className="mx-auto mb-4 group-hover:scale-110 transition-transform" />
+              <h3 className="text-2xl font-bold mb-2">Commander</h3>
+              <p className="text-sm">Passez commande</p>
+            </button>
+
+            {/* Card Contact */}
+            <button
+              onClick={() => onSectionChange?.('contact')}
+              className="border-4 border-black p-8 hover:bg-black hover:text-white transition-all duration-300 group cursor-pointer"
+            >
+              <Mail size={48} className="mx-auto mb-4 group-hover:scale-110 transition-transform" />
+              <h3 className="text-2xl font-bold mb-2">Contact</h3>
+              <p className="text-sm">Événements privés</p>
+            </button>
           </div>
         </div>
       </section>

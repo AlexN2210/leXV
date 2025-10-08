@@ -15,7 +15,7 @@ function App() {
   const renderSection = () => {
     switch (currentSection) {
       case 'accueil':
-        return <Accueil />;
+        return <Accueil onSectionChange={setCurrentSection} />;
       case 'localisation':
         return <Localisation />;
       case 'menu':
@@ -27,7 +27,7 @@ function App() {
       case 'admin':
         return <Admin />;
       default:
-        return <Accueil />;
+        return <Accueil onSectionChange={setCurrentSection} />;
     }
   };
 
