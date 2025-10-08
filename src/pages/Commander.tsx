@@ -25,6 +25,14 @@ interface Arret {
   horaire_fin: string;
 }
 
+interface Horaire {
+  id: string;
+  jour: string;
+  horaire_debut: string;
+  horaire_fin: string;
+  actif: boolean;
+}
+
 interface CartItem {
   menuItem: MenuItem;
   quantite: number;
@@ -34,6 +42,7 @@ export const Commander = () => {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [arrets, setArrets] = useState<Arret[]>([]);
+  const [horaires, setHoraires] = useState<Horaire[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -59,7 +68,17 @@ export const Commander = () => {
   // Filtrer les jours disponibles pour le lieu sélectionné
   const joursDisponibles = arrets
     .filter(a => a.nom === formData.lieu)
-    .map(a => ({ jour: a.jour, id: a.id, horaire_debut: a.horaire_debut, horaire_fin: a.horaire_fin }));
+    .map(a => {
+      // Récupérer les horaires depuis la table horaires
+      const horaireJour = horaires.find(h => h.jour === a.jour);
+      console.log('Horaires pour', a.jour, ':', horaireJour?.horaire_debut, '-', horaireJour?.horaire_fin);
+      return { 
+        jour: a.jour, 
+        id: a.id, 
+        horaire_debut: horaireJour?.horaire_debut || '18:00', 
+        horaire_fin: horaireJour?.horaire_fin || '22:00' 
+      };
+    });
 
   // Générer les prochaines dates disponibles pour le jour sélectionné
   const getProchainesdates = (jour: string) => {
@@ -86,15 +105,23 @@ export const Commander = () => {
 
   const fetchData = async () => {
     try {
-      const [categoriesRes, itemsRes, arretsRes] = await Promise.all([
+      const [categoriesRes, itemsRes, arretsRes, horairesRes] = await Promise.all([
         supabase.from('menu_categories').select('*').order('ordre'),
         supabase.from('menu_items').select('*').eq('disponible', true).order('ordre'),
         supabase.from('arrets').select('*').eq('actif', true).order('jour'),
+        supabase.from('horaires').select('*').eq('actif', true),
       ]);
 
       if (categoriesRes.data) setCategories(categoriesRes.data);
       if (itemsRes.data) setMenuItems(itemsRes.data);
-      if (arretsRes.data) setArrets(arretsRes.data);
+      if (arretsRes.data) {
+        console.log('Arrêts chargés:', arretsRes.data);
+        setArrets(arretsRes.data);
+      }
+      if (horairesRes.data) {
+        console.log('Horaires chargés:', horairesRes.data);
+        setHoraires(horairesRes.data);
+      }
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
     } finally {
@@ -429,32 +456,46 @@ export const Commander = () => {
                   {formData.jour && (
                     <div>
                       <label className="block font-semibold mb-2">Heure de Retrait *</label>
-                      <input
-                        type="time"
+                      <select
                         required
                         value={formData.heureRetrait}
-                        onChange={(e) => {
-                          const selectedTime = e.target.value;
-                          const jourInfo = joursDisponibles.find(j => j.jour === formData.jour);
-                          
-                          // Convertir les heures au format HH:MM pour la comparaison
-                          const heureDebut = jourInfo?.horaire_debut?.substring(0, 5);
-                          const heureFin = jourInfo?.horaire_fin?.substring(0, 5);
-                          
-                          if (jourInfo && selectedTime >= heureDebut && selectedTime <= heureFin) {
-                            setFormData({ ...formData, heureRetrait: selectedTime });
-                          } else {
-                            alert(`L'heure doit être entre ${heureDebut} et ${heureFin}`);
-                            setFormData({ ...formData, heureRetrait: '' });
-                          }
-                        }}
-                        min={joursDisponibles.find(j => j.jour === formData.jour)?.horaire_debut?.substring(0, 5)}
-                        max={joursDisponibles.find(j => j.jour === formData.jour)?.horaire_fin?.substring(0, 5)}
-                        step="900"
+                        onChange={(e) =>
+                          setFormData({ ...formData, heureRetrait: e.target.value })
+                        }
                         className="w-full border-2 border-black p-3"
-                      />
+                      >
+                        <option value="">Sélectionnez une heure</option>
+                        {(() => {
+                          const jourInfo = joursDisponibles.find(j => j.jour === formData.jour);
+                          if (!jourInfo) return null;
+                          
+                          const heureDebut = jourInfo.horaire_debut?.substring(0, 5) || '18:00';
+                          const heureFin = jourInfo.horaire_fin?.substring(0, 5) || '22:00';
+                          
+                          // Convertir les heures en minutes
+                          const [heureD, minuteD] = heureDebut.split(':').map(Number);
+                          const [heureF, minuteF] = heureFin.split(':').map(Number);
+                          const minutesDebut = heureD * 60 + minuteD;
+                          const minutesFin = heureF * 60 + minuteF;
+                          
+                          // Générer les créneaux de 15 minutes
+                          const creneaux = [];
+                          for (let minutes = minutesDebut; minutes <= minutesFin; minutes += 15) {
+                            const h = Math.floor(minutes / 60);
+                            const m = minutes % 60;
+                            const heure = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                            creneaux.push(heure);
+                          }
+                          
+                          return creneaux.map(heure => (
+                            <option key={heure} value={heure}>
+                              {heure}
+                            </option>
+                          ));
+                        })()}
+                      </select>
                       <p className="text-sm text-gray-600 mt-1">
-                        Horaires disponibles : {joursDisponibles.find(j => j.jour === formData.jour)?.horaire_debut?.substring(0, 5)} - {joursDisponibles.find(j => j.jour === formData.jour)?.horaire_fin?.substring(0, 5)} (par tranches de 15 min)
+                        Créneaux disponibles par tranches de 15 minutes
                       </p>
                     </div>
                   )}
