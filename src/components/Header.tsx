@@ -14,6 +14,7 @@ export const Header = ({ currentSection, onSectionChange }: HeaderProps) => {
     { id: 'localisation', label: 'Localisation' },
     { id: 'menu', label: 'Menu' },
     { id: 'commander', label: 'Commander' },
+    { id: 'contact', label: 'Contact' },
   ];
 
   const handleSectionClick = (sectionId: string) => {

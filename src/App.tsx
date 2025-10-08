@@ -6,6 +6,7 @@ import { Accueil } from './pages/Accueil';
 import { Localisation } from './pages/Localisation';
 import { Menu } from './pages/Menu';
 import { Commander } from './pages/Commander';
+import { Contact } from './pages/Contact';
 import { Admin } from './pages/Admin';
 
 function App() {
@@ -21,6 +22,8 @@ function App() {
         return <Menu />;
       case 'commander':
         return <Commander />;
+      case 'contact':
+        return <Contact />;
       case 'admin':
         return <Admin />;
       default:
