@@ -8,6 +8,7 @@ interface MenuItem {
   description: string;
   prix: number;
   category_id: string;
+  disponible: boolean;
 }
 
 interface MenuCategory {
@@ -205,44 +206,52 @@ export const Commander = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <h2 className="text-3xl font-bold mb-6">Sélection des Plats</h2>
-            {categories.map((category) => {
-              const categoryItems = menuItems.filter(
-                (item) => item.category_id === category.id
-              );
-              if (categoryItems.length === 0) return null;
+            {categories.length === 0 && menuItems.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-xl text-gray-600">
+                  Aucun plat disponible pour le moment. Revenez bientôt !
+                </p>
+              </div>
+            ) : (
+              categories.map((category) => {
+                const categoryItems = menuItems.filter(
+                  (item) => item.category_id === category.id
+                );
+                if (categoryItems.length === 0) return null;
 
-              return (
-                <div key={category.id} className="mb-8">
-                  <h3 className="text-2xl font-bold mb-4 border-b-2 border-black pb-2">
-                    {category.nom}
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {categoryItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className="border-2 border-black p-4 flex justify-between items-start hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex-1">
-                          <h4 className="font-bold text-lg">{item.nom}</h4>
-                          {item.description && (
-                            <p className="text-sm text-gray-600 mt-1">
-                              {item.description}
-                            </p>
-                          )}
-                          <p className="font-bold mt-2">{item.prix.toFixed(2)}€</p>
-                        </div>
-                        <button
-                          onClick={() => addToCart(item)}
-                          className="ml-4 bg-black text-white p-2 hover:bg-gray-800 transition-colors"
+                return (
+                  <div key={category.id} className="mb-8">
+                    <h3 className="text-2xl font-bold mb-4 border-b-2 border-black pb-2">
+                      {category.nom}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {categoryItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className="border-2 border-black p-4 flex justify-between items-start hover:bg-gray-50 transition-colors"
                         >
-                          <Plus size={20} />
-                        </button>
-                      </div>
-                    ))}
+                          <div className="flex-1">
+                            <h4 className="font-bold text-lg">{item.nom}</h4>
+                            {item.description && (
+                              <p className="text-sm text-gray-600 mt-1 italic">
+                                {item.description}
+                              </p>
+                            )}
+                            <p className="font-bold mt-2">{item.prix.toFixed(2)}€</p>
+                          </div>
+                          <button
+                            onClick={() => addToCart(item)}
+                            className="ml-4 bg-black text-white p-2 hover:bg-gray-800 transition-colors"
+                          >
+                            <Plus size={20} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
 
           <div className="lg:col-span-1">
