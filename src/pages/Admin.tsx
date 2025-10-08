@@ -76,8 +76,15 @@ export const Admin = () => {
     setLoginError('');
     try {
       await signIn(email, password);
-    } catch (error) {
-      setLoginError('Email ou mot de passe incorrect');
+    } catch (error: any) {
+      console.error('Erreur de connexion:', error);
+      if (error.message?.includes('Invalid login credentials')) {
+        setLoginError('Email ou mot de passe incorrect');
+      } else if (error.message?.includes('Email not confirmed')) {
+        setLoginError('Veuillez confirmer votre email avant de vous connecter');
+      } else {
+        setLoginError('Erreur de connexion. Veuillez réessayer.');
+      }
     }
   };
 
@@ -143,7 +150,8 @@ export const Admin = () => {
         <div className="max-w-md w-full">
           <div className="text-center mb-8">
             <Lock size={64} className="mx-auto mb-6" />
-            <h1 className="text-4xl font-bold mb-2">Espace Admin</h1>
+            <h1 className="text-4xl font-bold mb-2">LE XV</h1>
+            <h2 className="text-2xl font-bold mb-2">Espace Admin</h2>
             <p className="text-gray-600">Connectez-vous pour accéder au backoffice</p>
           </div>
 
@@ -162,8 +170,9 @@ export const Admin = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full border-2 border-black p-3"
+                  className="w-full border-2 border-black p-3 focus:outline-none focus:ring-2 focus:ring-black"
                   placeholder="admin@lexv.fr"
+                  autoComplete="email"
                 />
               </div>
 
@@ -174,7 +183,9 @@ export const Admin = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full border-2 border-black p-3"
+                  className="w-full border-2 border-black p-3 focus:outline-none focus:ring-2 focus:ring-black"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
                 />
               </div>
 
