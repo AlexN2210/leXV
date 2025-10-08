@@ -61,6 +61,25 @@ export const Commander = () => {
     .filter(a => a.nom === formData.lieu)
     .map(a => ({ jour: a.jour, id: a.id, horaire_debut: a.horaire_debut, horaire_fin: a.horaire_fin }));
 
+  // Générer les prochaines dates disponibles pour le jour sélectionné
+  const getProchainesdates = (jour: string) => {
+    const dates = [];
+    const joursFr = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    const jourIndex = joursFr.indexOf(jour);
+    const today = new Date();
+    
+    // Générer les 8 prochaines occurrences du jour sélectionné
+    for (let i = 0; i < 60; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      if (date.getDay() === jourIndex) {
+        dates.push(date.toISOString().split('T')[0]);
+      }
+      if (dates.length >= 8) break;
+    }
+    return dates;
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -376,26 +395,33 @@ export const Commander = () => {
                   {formData.jour && (
                     <div>
                       <label className="block font-semibold mb-2">Date de Retrait *</label>
-                      <input
-                        type="date"
+                      <select
                         required
                         value={formData.dateRetrait}
-                        onChange={(e) => {
-                          const selectedDate = new Date(e.target.value);
-                          const dayOfWeek = selectedDate.getDay();
-                          const joursFr = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-                          
-                          if (joursFr[dayOfWeek] === formData.jour) {
-                            setFormData({ ...formData, dateRetrait: e.target.value });
-                          } else {
-                            alert(`Veuillez sélectionner un ${formData.jour}`);
-                          }
-                        }}
-                        min={new Date().toISOString().split('T')[0]}
+                        onChange={(e) =>
+                          setFormData({ ...formData, dateRetrait: e.target.value })
+                        }
                         className="w-full border-2 border-black p-3"
-                      />
+                      >
+                        <option value="">Sélectionnez une date</option>
+                        {getProchainesdates(formData.jour).map((date) => {
+                          const dateObj = new Date(date);
+                          const options: Intl.DateTimeFormatOptions = { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          };
+                          const dateFormatee = dateObj.toLocaleDateString('fr-FR', options);
+                          return (
+                            <option key={date} value={date}>
+                              {dateFormatee}
+                            </option>
+                          );
+                        })}
+                      </select>
                       <p className="text-sm text-gray-600 mt-1">
-                        Sélectionnez un {formData.jour}
+                        Prochains {formData.jour}s disponibles
                       </p>
                     </div>
                   )}
