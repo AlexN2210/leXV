@@ -199,7 +199,6 @@ export const Admin = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full border-2 border-black p-3 focus:outline-none focus:ring-2 focus:ring-black"
-                  placeholder="admin@lexv.fr"
                   autoComplete="email"
                 />
               </div>
@@ -212,7 +211,6 @@ export const Admin = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full border-2 border-black p-3 focus:outline-none focus:ring-2 focus:ring-black"
-                  placeholder="••••••••"
                   autoComplete="current-password"
                 />
               </div>
