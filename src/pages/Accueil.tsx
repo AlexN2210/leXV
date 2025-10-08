@@ -37,14 +37,13 @@ export const Accueil = ({ onSectionChange }: AccueilProps) => {
           <h2 className="text-4xl md:text-5xl font-bold text-center mb-12">Notre Histoire</h2>
           <div className="prose prose-lg max-w-none text-gray-700 space-y-6">
             <p className="text-lg leading-relaxed">
-              Bienvenue au <strong>XV</strong>, votre food truck artisanal qui sillonne les rues pour vous
-              offrir une expérience culinaire unique. Nous sommes passionnés par la création de burgers
-              authentiques et de snacks savoureux, préparés avec des ingrédients frais et de qualité.
+              Au Food Truck Le XV, nous parcourons les rues pour vous proposer une expérience culinaire authentique et conviviale. Ici, chaque bouchée est pensée pour ravir vos papilles, avec des recettes simples mais généreuses.
             </p>
             <p className="text-lg leading-relaxed">
-              Notre mission est simple : vous faire découvrir des saveurs exceptionnelles dans une
-              ambiance conviviale. Chaque plat est préparé avec soin et amour, pour garantir une
-              satisfaction à chaque bouchée.
+              Nous mettons un point d'honneur à préparer des snacks et formules maison, faits à partir d'ingrédients frais et sélectionnés. Que ce soit un cornet d'oignons frits, des frites fraîches, des tenders ou des drumsticks, tout est cuisiné avec soin.
+            </p>
+            <p className="text-lg leading-relaxed">
+              Notre mission ? Vous offrir des saveurs marquées et accessibles, dans une ambiance chaleureuse et décontractée. Chaque plat vous invite à partager un moment gourmand, rapide mais sans compromis sur la qualité.
             </p>
           </div>
         </div>
