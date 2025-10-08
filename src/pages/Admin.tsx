@@ -271,17 +271,20 @@ export const Admin = () => {
             <h1 className="text-5xl font-bold mb-2">LE XV - Backoffice</h1>
             <p className="text-gray-600">Administration</p>
             {isInstalled && (
-              <p className="text-xs text-green-600 mt-1">📱 Application installée</p>
+              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <span className="w-2 h-2 bg-green-600 rounded-full"></span>
+                Application installée
+              </p>
             )}
           </div>
           <div className="flex gap-3">
             {isInstallable && !isInstalled && (
               <button
                 onClick={handleInstallClick}
-                className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 font-semibold hover:bg-green-700 transition-colors"
+                className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 font-semibold hover:bg-green-700 transition-colors animate-pulse"
               >
                 <Download size={20} />
-                Installer l'App
+                Installer l'App Admin
               </button>
             )}
             <button

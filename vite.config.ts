@@ -9,17 +9,54 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['*.jpg', '*.png', '*.svg'],
+      devOptions: {
+        enabled: true
+      },
       manifest: {
-        name: 'Le XV Food Truck - Admin',
-        short_name: 'Le XV Admin',
-        description: 'Application admin pour gérer Le XV Food Truck',
+        name: 'Le XV - Backoffice Admin',
+        short_name: 'XV Admin',
+        description: 'Interface d\'administration Le XV Food Truck',
         theme_color: '#000000',
-        background_color: '#ffffff',
+        background_color: '#000000',
         display: 'standalone',
-        orientation: 'portrait',
+        orientation: 'any',
         scope: '/',
-        start_url: '/',
+        start_url: '/#admin',
+        id: '/admin',
+        categories: ['food', 'restaurants', 'business'],
+        prefer_related_applications: false,
+        display_override: ['standalone', 'fullscreen'],
         icons: [
+          {
+            src: '/logoxv.png',
+            sizes: '72x72',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/logoxv.png',
+            sizes: '96x96',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/logoxv.png',
+            sizes: '128x128',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/logoxv.png',
+            sizes: '144x144',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/logoxv.png',
+            sizes: '152x152',
+            type: 'image/png',
+            purpose: 'any'
+          },
           {
             src: '/logoxv.png',
             sizes: '192x192',
@@ -28,9 +65,50 @@ export default defineConfig({
           },
           {
             src: '/logoxv.png',
+            sizes: '384x384',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/logoxv.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
+          },
+          {
+            src: '/logoxv.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable'
+          },
+          {
+            src: '/logoxv.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          }
+        ],
+        shortcuts: [
+          {
+            name: 'Commandes',
+            short_name: 'Commandes',
+            description: 'Gérer les commandes',
+            url: '/?admin=true&tab=commandes',
+            icons: [{ src: '/logoxv.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Financier',
+            short_name: 'Financier',
+            description: 'Statistiques',
+            url: '/?admin=true&tab=financier',
+            icons: [{ src: '/logoxv.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Paramètres',
+            short_name: 'Paramètres',
+            description: 'Configuration',
+            url: '/?admin=true&tab=parametres',
+            icons: [{ src: '/logoxv.png', sizes: '192x192' }]
           }
         ]
       },

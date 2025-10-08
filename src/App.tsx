@@ -10,7 +10,19 @@ import { Contact } from './pages/Contact';
 import { Admin } from './pages/Admin';
 
 function App() {
-  const [currentSection, setCurrentSection] = useState('accueil');
+  // Déterminer la section initiale
+  const getInitialSection = () => {
+    // Si lancé depuis la PWA ou hash #admin dans l'URL
+    const hash = window.location.hash.substring(1);
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (hash === 'admin' || urlParams.get('admin') === 'true') {
+      return 'admin';
+    }
+    return 'accueil';
+  };
+
+  const [currentSection, setCurrentSection] = useState(getInitialSection());
 
   const renderSection = () => {
     switch (currentSection) {
