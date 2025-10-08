@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ShoppingCart, CheckCircle, Plus, Minus, Trash2 } from 'lucide-react';
+import { ShoppingCart, CheckCircle, Plus, Minus, Trash2, Mail, Printer, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { envoyerEmailConfirmation, genererRecapitulatifCommande, telechargerRecapitulatifPDF } from '../lib/emailService';
 
 interface MenuItem {
   id: string;
@@ -47,6 +48,8 @@ export const Commander = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [recapitulatif, setRecapitulatif] = useState('');
+  const [commandeData, setCommandeData] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     lieu: '',
@@ -205,6 +208,36 @@ export const Commander = () => {
 
       if (itemsError) throw itemsError;
 
+      // Préparer les données pour l'email
+      const emailData = {
+        clientNom: formData.clientNom,
+        clientEmail: formData.clientEmail,
+        clientTelephone: formData.clientTelephone,
+        lieu: formData.lieu,
+        jour: formData.jour,
+        dateRetrait: formData.dateRetrait,
+        heureRetrait: formData.heureRetrait,
+        articles: cart.map(item => ({
+          nom: item.menuItem.nom,
+          quantite: item.quantite,
+          prix: item.menuItem.prix
+        })),
+        total: calculateTotal(),
+        numeroCommande: commandeData.id.substring(0, 8).toUpperCase()
+      };
+
+      // Sauvegarder les données de la commande pour le PDF
+      setCommandeData(emailData);
+
+      // Générer le récapitulatif
+      const recap = genererRecapitulatifCommande(emailData);
+      setRecapitulatif(recap);
+
+      // Tenter d'envoyer l'email (si configuré)
+      if (formData.clientEmail) {
+        await envoyerEmailConfirmation(emailData);
+      }
+
       setSuccess(true);
       setCart([]);
       setFormData({
@@ -235,19 +268,78 @@ export const Commander = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-4">
-        <div className="max-w-md w-full text-center">
-          <CheckCircle size={80} className="mx-auto mb-6 text-black" />
-          <h2 className="text-4xl font-bold mb-4">Commande Confirmée !</h2>
-          <p className="text-xl text-gray-600 mb-8">
-            Votre commande a été enregistrée avec succès. Nous la préparons avec soin !
-          </p>
-          <button
-            onClick={() => setSuccess(false)}
-            className="bg-black text-white px-8 py-3 text-lg font-semibold hover:bg-gray-800 transition-colors"
-          >
-            Nouvelle Commande
-          </button>
+      <div className="min-h-screen bg-white flex items-center justify-center px-4 py-20">
+        <div className="max-w-2xl w-full">
+          <div className="text-center mb-8">
+            <CheckCircle size={80} className="mx-auto mb-6 text-green-600" />
+            <h2 className="text-4xl font-bold mb-4">Commande Confirmée !</h2>
+            <p className="text-xl text-gray-600">
+              Votre commande a été enregistrée avec succès. Nous la préparons avec soin !
+            </p>
+          </div>
+
+          {/* Récapitulatif de la commande */}
+          <div className="border-4 border-black p-6 mb-6 bg-white">
+            <h3 className="text-2xl font-bold mb-4 text-center">📋 Récapitulatif</h3>
+            <pre className="whitespace-pre-wrap font-mono text-sm bg-gray-50 p-6 border-2 border-gray-300 overflow-x-auto">
+              {recapitulatif}
+            </pre>
+          </div>
+
+          {/* Boutons d'action */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button
+              onClick={() => {
+                if (commandeData) {
+                  telechargerRecapitulatifPDF(commandeData);
+                }
+              }}
+              className="flex items-center justify-center gap-2 bg-green-600 text-white px-6 py-3 text-lg font-semibold hover:bg-green-700 transition-colors"
+            >
+              <Download size={20} />
+              Télécharger PDF
+            </button>
+            <button
+              onClick={() => {
+                const printWindow = window.open('', '_blank');
+                if (printWindow) {
+                  printWindow.document.write(`<pre style="font-family: monospace; white-space: pre-wrap; padding: 20px;">${recapitulatif}</pre>`);
+                  printWindow.document.close();
+                  printWindow.print();
+                }
+              }}
+              className="flex items-center justify-center gap-2 bg-gray-700 text-white px-6 py-3 text-lg font-semibold hover:bg-gray-800 transition-colors"
+            >
+              <Printer size={20} />
+              Imprimer
+            </button>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(recapitulatif);
+                alert('Récapitulatif copié dans le presse-papier !');
+              }}
+              className="flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 text-lg font-semibold hover:bg-blue-700 transition-colors"
+            >
+              <Mail size={20} />
+              Copier
+            </button>
+            <button
+              onClick={() => {
+                setSuccess(false);
+                setRecapitulatif('');
+                setCommandeData(null);
+              }}
+              className="bg-black text-white px-6 py-3 text-lg font-semibold hover:bg-gray-800 transition-colors"
+            >
+              Nouvelle Commande
+            </button>
+          </div>
+
+          <div className="mt-6 bg-green-50 border-2 border-green-600 p-4 text-center">
+            <p className="text-green-800 font-semibold">
+              💬 Vous recevrez une notification par SMS ou appel téléphonique quand votre commande sera prête !
+            </p>
+          </div>
         </div>
       </div>
     );

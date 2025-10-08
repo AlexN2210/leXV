@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Lock, LogOut, Package, CheckCircle, Clock, X, Settings, ShoppingBag } from 'lucide-react';
+import { Lock, LogOut, Package, CheckCircle, Clock, X, Settings, ShoppingBag, Download } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { GestionAdmins } from '../components/admin/GestionAdmins';
 import { GestionArrets } from '../components/admin/GestionArrets';
 import { GestionHoraires } from '../components/admin/GestionHoraires';
 import { GestionMenu } from '../components/admin/GestionMenu';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 interface CommandeItem {
   id: string;
@@ -35,6 +36,7 @@ interface Commande {
 
 export const Admin = () => {
   const { user, loading: authLoading, signIn, signOut } = useAuth();
+  const { isInstallable, isInstalled, handleInstallClick } = usePWAInstall();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -46,6 +48,27 @@ export const Admin = () => {
   useEffect(() => {
     if (user) {
       fetchCommandes();
+      
+      // Rafraîchissement automatique toutes les 10 secondes
+      const interval = setInterval(() => {
+        fetchCommandes();
+      }, 10000);
+
+      // Écouter les changements en temps réel
+      const channel = supabase
+        .channel('commandes-changes')
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'commandes' }, 
+          () => {
+            fetchCommandes();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        clearInterval(interval);
+        channel.unsubscribe();
+      };
     }
   }, [user]);
 
@@ -210,18 +233,32 @@ export const Admin = () => {
   return (
     <div className="bg-white text-black py-20 px-4 min-h-screen">
       <div className="container mx-auto max-w-7xl">
-        <div className="flex justify-between items-center mb-12">
+        <div className="flex flex-wrap justify-between items-center mb-12 gap-4">
           <div>
             <h1 className="text-5xl font-bold mb-2">LE XV - Backoffice</h1>
             <p className="text-gray-600">Administration</p>
+            {isInstalled && (
+              <p className="text-xs text-green-600 mt-1">📱 Application installée</p>
+            )}
           </div>
-          <button
-            onClick={() => signOut()}
-            className="flex items-center gap-2 bg-black text-white px-6 py-3 font-semibold hover:bg-gray-800 transition-colors"
-          >
-            <LogOut size={20} />
-            Déconnexion
-          </button>
+          <div className="flex gap-3">
+            {isInstallable && !isInstalled && (
+              <button
+                onClick={handleInstallClick}
+                className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 font-semibold hover:bg-green-700 transition-colors"
+              >
+                <Download size={20} />
+                Installer l'App
+              </button>
+            )}
+            <button
+              onClick={() => signOut()}
+              className="flex items-center gap-2 bg-black text-white px-6 py-3 font-semibold hover:bg-gray-800 transition-colors"
+            >
+              <LogOut size={20} />
+              Déconnexion
+            </button>
+          </div>
         </div>
 
         {/* Onglets */}
@@ -253,6 +290,21 @@ export const Admin = () => {
         {/* Contenu de l'onglet Commandes */}
         {activeTab === 'commandes' && (
           <>
+            <div className="mb-6 bg-green-50 border-2 border-green-600 p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-green-600 rounded-full animate-pulse"></div>
+                <p className="font-semibold text-green-800">
+                  Mise à jour automatique en temps réel
+                </p>
+              </div>
+              <button
+                onClick={() => fetchCommandes()}
+                className="bg-black text-white px-4 py-2 font-semibold hover:bg-gray-800 text-sm"
+              >
+                🔄 Rafraîchir
+              </button>
+            </div>
+
             <div className="mb-8 flex flex-wrap gap-4">
               <button
                 onClick={() => setFilter('tous')}
@@ -310,89 +362,126 @@ export const Admin = () => {
             {filteredCommandes.map((commande) => (
               <div
                 key={commande.id}
-                className="border-4 border-black p-6 hover:shadow-xl transition-shadow"
+                className="border-4 border-black bg-white hover:shadow-2xl transition-all"
               >
-                <div className="flex flex-wrap justify-between items-start mb-6">
+                {/* En-tête de la card */}
+                <div className="bg-black text-white p-4 flex justify-between items-center">
                   <div>
-                    <h3 className="text-2xl font-bold mb-2">{commande.client_nom}</h3>
-                    <div className="text-gray-600 space-y-1">
-                      <p>Téléphone: {commande.client_telephone}</p>
-                      {commande.client_email && <p>Email: {commande.client_email}</p>}
-                      <p>Retrait: {commande.arrets?.nom}</p>
-                      <p>
-                        Date: {new Date(commande.date_retrait).toLocaleDateString('fr-FR')} à{' '}
-                        {commande.heure_retrait}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Commandé le:{' '}
-                        {new Date(commande.created_at).toLocaleString('fr-FR')}
-                      </p>
-                    </div>
+                    <h3 className="text-2xl font-bold">{commande.client_nom}</h3>
+                    <p className="text-sm text-gray-300">
+                      Commande #{commande.id.substring(0, 8)}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <div className="mb-4">{getStatusBadge(commande.statut)}</div>
-                    <div className="text-3xl font-bold">
-                      {commande.montant_total.toFixed(2)}€
+                    {getStatusBadge(commande.statut)}
+                  </div>
+                </div>
+
+                {/* Contenu de la card */}
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    {/* Informations client */}
+                    <div>
+                      <h4 className="font-bold text-lg mb-3 border-b-2 border-black pb-2">
+                        👤 Informations Client
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <p><span className="font-semibold">Nom:</span> {commande.client_nom}</p>
+                        <p><span className="font-semibold">Téléphone:</span> {commande.client_telephone}</p>
+                        {commande.client_email && (
+                          <p><span className="font-semibold">Email:</span> {commande.client_email}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Informations de retrait */}
+                    <div>
+                      <h4 className="font-bold text-lg mb-3 border-b-2 border-black pb-2">
+                        📍 Informations de Retrait
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <p><span className="font-semibold">Lieu:</span> {commande.arrets?.nom || 'N/A'}</p>
+                        <p><span className="font-semibold">Date:</span> {new Date(commande.date_retrait).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                        <p><span className="font-semibold">Heure:</span> {commande.heure_retrait}</p>
+                        <p className="text-xs text-gray-500 mt-3">
+                          Commandé le: {new Date(commande.created_at).toLocaleString('fr-FR')}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="mb-6">
-                  <h4 className="font-bold text-lg mb-3">Articles commandés:</h4>
-                  <div className="space-y-2">
-                    {commande.commande_items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex justify-between bg-gray-50 p-3 border-2 border-gray-300"
-                      >
-                        <span>
-                          {item.quantite}x {item.menu_items.nom}
-                        </span>
-                        <span className="font-semibold">
-                          {(item.quantite * item.prix_unitaire).toFixed(2)}€
-                        </span>
+                  {/* Articles commandés */}
+                  <div className="mb-6">
+                    <h4 className="font-bold text-lg mb-3 border-b-2 border-black pb-2">
+                      🍔 Articles Commandés
+                    </h4>
+                    <div className="space-y-2">
+                      {commande.commande_items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex justify-between items-center bg-gray-50 p-4 border-2 border-black"
+                        >
+                          <div>
+                            <span className="font-bold text-lg">{item.quantite}x</span>
+                            <span className="ml-2 font-semibold">{item.menu_items.nom}</span>
+                            <p className="text-xs text-gray-600 ml-8">
+                              Prix unitaire: {item.prix_unitaire.toFixed(2)}€
+                            </p>
+                          </div>
+                          <span className="font-bold text-lg">
+                            {(item.quantite * item.prix_unitaire).toFixed(2)}€
+                          </span>
+                        </div>
+                      ))}
+                      <div className="bg-black text-white p-4 border-2 border-black flex justify-between items-center mt-4">
+                        <span className="font-bold text-xl">TOTAL</span>
+                        <span className="font-bold text-3xl">{commande.montant_total.toFixed(2)}€</span>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex flex-wrap gap-3">
-                  {commande.statut === 'en_attente' && (
-                    <button
-                      onClick={() => handleStatusChange(commande.id, 'en_preparation')}
-                      className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 font-semibold hover:bg-blue-700 transition-colors"
-                    >
-                      <Clock size={20} />
-                      Mettre en Préparation
-                    </button>
-                  )}
-                  {commande.statut === 'en_preparation' && (
-                    <button
-                      onClick={() => handleStatusChange(commande.id, 'prete')}
-                      className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 font-semibold hover:bg-green-700 transition-colors"
-                    >
-                      <CheckCircle size={20} />
-                      Marquer comme Prête
-                    </button>
-                  )}
-                  {commande.statut === 'prete' && (
-                    <button
-                      onClick={() => handleStatusChange(commande.id, 'recuperee')}
-                      className="flex items-center gap-2 bg-gray-600 text-white px-6 py-3 font-semibold hover:bg-gray-700 transition-colors"
-                    >
-                      <Package size={20} />
-                      Marquer comme Récupérée
-                    </button>
-                  )}
-                  {commande.statut !== 'annulee' && commande.statut !== 'recuperee' && (
-                    <button
-                      onClick={() => handleStatusChange(commande.id, 'annulee')}
-                      className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 font-semibold hover:bg-red-700 transition-colors"
-                    >
-                      <X size={20} />
-                      Annuler
-                    </button>
-                  )}
+                  {/* Actions sur la commande */}
+                  <div className="border-t-2 border-gray-200 pt-4">
+                    <h4 className="font-bold text-lg mb-3">⚡ Actions</h4>
+                    <div className="flex flex-wrap gap-3">
+                      {commande.statut === 'en_attente' && (
+                        <button
+                          onClick={() => handleStatusChange(commande.id, 'en_preparation')}
+                          className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 font-semibold hover:bg-blue-700 transition-colors"
+                        >
+                          <Clock size={20} />
+                          Mettre en Préparation
+                        </button>
+                      )}
+                      {commande.statut === 'en_preparation' && (
+                        <button
+                          onClick={() => handleStatusChange(commande.id, 'prete')}
+                          className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 font-semibold hover:bg-green-700 transition-colors"
+                        >
+                          <CheckCircle size={20} />
+                          Marquer comme Prête
+                        </button>
+                      )}
+                      {commande.statut === 'prete' && (
+                        <button
+                          onClick={() => handleStatusChange(commande.id, 'recuperee')}
+                          className="flex items-center gap-2 bg-gray-600 text-white px-6 py-3 font-semibold hover:bg-gray-700 transition-colors"
+                        >
+                          <Package size={20} />
+                          Marquer comme Récupérée
+                        </button>
+                      )}
+                      {commande.statut !== 'annulee' && commande.statut !== 'recuperee' && (
+                        <button
+                          onClick={() => handleStatusChange(commande.id, 'annulee')}
+                          className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 font-semibold hover:bg-red-700 transition-colors"
+                        >
+                          <X size={20} />
+                          Annuler
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}

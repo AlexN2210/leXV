@@ -90,13 +90,12 @@ export const Localisation = () => {
 
         <div className="mb-16 aspect-video w-full bg-gray-200 border-4 border-black rounded-lg overflow-hidden">
           <iframe
-            src="https://www.google.com/maps/d/embed?mid=1i_KgGpvnNSr2uBAY8qY4ps4fv-HJLpw&ehbc=2E312F"
+            src="https://www.openstreetmap.org/export/embed.html?bbox=3.55%2C43.45%2C3.70%2C43.55&layer=mapnik"
             width="100%"
             height="100%"
             style={{ border: 0 }}
             allowFullScreen
             loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
             title="Carte des emplacements"
           ></iframe>
         </div>
