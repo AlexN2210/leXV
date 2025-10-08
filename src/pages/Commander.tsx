@@ -40,6 +40,8 @@ export const Commander = () => {
   const [success, setSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
+    lieu: '',
+    jour: '',
     arretId: '',
     dateRetrait: '',
     heureRetrait: '',
@@ -47,6 +49,17 @@ export const Commander = () => {
     clientTelephone: '',
     clientEmail: '',
   });
+
+  // Récupérer les lieux uniques
+  const lieux = Array.from(new Set(arrets.map(a => a.nom))).map(nom => ({
+    nom,
+    adresse: arrets.find(a => a.nom === nom)?.adresse || ''
+  }));
+
+  // Filtrer les jours disponibles pour le lieu sélectionné
+  const joursDisponibles = arrets
+    .filter(a => a.nom === formData.lieu)
+    .map(a => ({ jour: a.jour, id: a.id, horaire_debut: a.horaire_debut, horaire_fin: a.horaire_fin }));
 
   useEffect(() => {
     fetchData();
@@ -149,6 +162,8 @@ export const Commander = () => {
       setSuccess(true);
       setCart([]);
       setFormData({
+        lieu: '',
+        jour: '',
         arretId: '',
         dateRetrait: '',
         heureRetrait: '',
@@ -309,24 +324,54 @@ export const Commander = () => {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block font-semibold mb-2">Point de Retrait *</label>
+                    <label className="block font-semibold mb-2">Lieu de Retrait *</label>
                     <select
                       required
-                      value={formData.arretId}
-                      onChange={(e) =>
-                        setFormData({ ...formData, arretId: e.target.value })
-                      }
+                      value={formData.lieu}
+                      onChange={(e) => {
+                        setFormData({ 
+                          ...formData, 
+                          lieu: e.target.value,
+                          jour: '',
+                          arretId: ''
+                        });
+                      }}
                       className="w-full border-2 border-black p-3"
                     >
-                      <option value="">Sélectionnez un emplacement</option>
-                      {arrets.map((arret) => (
-                        <option key={arret.id} value={arret.id}>
-                          {arret.nom} - {arret.jour} {arret.horaire_debut}-
-                          {arret.horaire_fin}
+                      <option value="">Sélectionnez un lieu</option>
+                      {lieux.map((lieu) => (
+                        <option key={lieu.nom} value={lieu.nom}>
+                          {lieu.nom} - {lieu.adresse}
                         </option>
                       ))}
                     </select>
                   </div>
+
+                  {formData.lieu && (
+                    <div>
+                      <label className="block font-semibold mb-2">Jour de Retrait *</label>
+                      <select
+                        required
+                        value={formData.jour}
+                        onChange={(e) => {
+                          const jourSelectionne = joursDisponibles.find(j => j.jour === e.target.value);
+                          setFormData({ 
+                            ...formData, 
+                            jour: e.target.value,
+                            arretId: jourSelectionne?.id || ''
+                          });
+                        }}
+                        className="w-full border-2 border-black p-3"
+                      >
+                        <option value="">Sélectionnez un jour</option>
+                        {joursDisponibles.map((jour) => (
+                          <option key={jour.jour} value={jour.jour}>
+                            {jour.jour} ({jour.horaire_debut} - {jour.horaire_fin})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block font-semibold mb-2">Date de Retrait *</label>
