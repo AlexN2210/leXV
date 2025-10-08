@@ -386,18 +386,25 @@ export const Commander = () => {
                     />
                   </div>
 
-                  <div>
-                    <label className="block font-semibold mb-2">Heure de Retrait *</label>
-                    <input
-                      type="time"
-                      required
-                      value={formData.heureRetrait}
-                      onChange={(e) =>
-                        setFormData({ ...formData, heureRetrait: e.target.value })
-                      }
-                      className="w-full border-2 border-black p-3"
-                    />
-                  </div>
+                  {formData.jour && (
+                    <div>
+                      <label className="block font-semibold mb-2">Heure de Retrait *</label>
+                      <input
+                        type="time"
+                        required
+                        value={formData.heureRetrait}
+                        onChange={(e) =>
+                          setFormData({ ...formData, heureRetrait: e.target.value })
+                        }
+                        min={joursDisponibles.find(j => j.jour === formData.jour)?.horaire_debut}
+                        max={joursDisponibles.find(j => j.jour === formData.jour)?.horaire_fin}
+                        className="w-full border-2 border-black p-3"
+                      />
+                      <p className="text-sm text-gray-600 mt-1">
+                        Horaires disponibles : {joursDisponibles.find(j => j.jour === formData.jour)?.horaire_debut} - {joursDisponibles.find(j => j.jour === formData.jour)?.horaire_fin}
+                      </p>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block font-semibold mb-2">Nom *</label>
