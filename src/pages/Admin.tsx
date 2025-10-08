@@ -495,6 +495,44 @@ export const Admin = () => {
             <h2 className="text-3xl font-bold mb-6">Paramètres et Configuration</h2>
             <p className="text-gray-600 mb-8">Gérez les paramètres de votre food truck</p>
             
+            {/* Carte PWA Installation */}
+            <div className="border-4 border-black p-6 bg-gradient-to-r from-green-50 to-blue-50">
+              <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                <Download size={28} />
+                Application Mobile (PWA)
+              </h3>
+              <p className="text-gray-700 mb-4">
+                Installez l'application admin sur votre téléphone ou tablette pour un accès rapide et une expérience optimale.
+              </p>
+              
+              {isInstalled ? (
+                <div className="bg-green-100 border-2 border-green-600 p-4 text-green-800">
+                  <p className="font-semibold">✓ Application déjà installée</p>
+                  <p className="text-sm mt-2">Vous pouvez accéder à l'admin depuis l'icône sur votre écran d'accueil.</p>
+                </div>
+              ) : isInstallable ? (
+                <button
+                  onClick={handleInstallClick}
+                  className="flex items-center gap-2 bg-green-600 text-white px-8 py-4 text-lg font-semibold hover:bg-green-700 transition-colors"
+                >
+                  <Download size={24} />
+                  Installer l'Application Admin
+                </button>
+              ) : (
+                <div className="bg-blue-100 border-2 border-blue-600 p-4 text-blue-800">
+                  <p className="font-semibold">📱 Installation disponible sur mobile</p>
+                  <p className="text-sm mt-2">
+                    Pour installer l'application :
+                  </p>
+                  <ul className="text-sm mt-2 space-y-1 list-disc list-inside">
+                    <li><strong>Sur Android :</strong> Menu (⋮) → "Ajouter à l'écran d'accueil"</li>
+                    <li><strong>Sur iOS :</strong> Bouton Partager → "Sur l'écran d'accueil"</li>
+                    <li><strong>Sur PC :</strong> Icône d'installation dans la barre d'adresse</li>
+                  </ul>
+                </div>
+              )}
+            </div>
+
             {/* Gestion des Demandes de Contact */}
             <GestionContacts />
 
