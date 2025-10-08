@@ -90,7 +90,7 @@ export const Localisation = () => {
 
         <div className="mb-16 aspect-video w-full bg-gray-200 border-4 border-black rounded-lg overflow-hidden">
           <iframe
-            src="https://www.openstreetmap.org/export/embed.html?bbox=3.55%2C43.45%2C3.70%2C43.55&layer=mapnik"
+            src="https://www.openstreetmap.org/export/embed.html?bbox=3.55%2C43.45%2C3.70%2C43.55&layer=mapnik&marker=43.50103759765625%2C3.602396249771118&marker=43.4827231%2C3.6569117"
             width="100%"
             height="100%"
             style={{ border: 0 }}
