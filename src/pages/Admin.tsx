@@ -10,7 +10,6 @@ import { GestionMenu } from '../components/admin/GestionMenu';
 import { GestionContacts } from '../components/admin/GestionContacts';
 import { Financier } from '../components/admin/Financier';
 import { usePWAInstall } from '../hooks/usePWAInstall';
-import { demanderPermissionNotifications, notifierNouvelleCommande, notifierNouveauContact, jouerSonNotification } from '../lib/notifications';
 
 interface CommandeItem {
   id: string;

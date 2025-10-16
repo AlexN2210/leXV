@@ -20,7 +20,7 @@ export const Accueil = ({ onSectionChange }: AccueilProps) => {
         <div
           className="absolute inset-0 opacity-40"
           style={{
-            backgroundImage: 'url(https://images.pexels.com/photos/4253312/pexels-photo-4253312.jpeg?auto=compress&cs=tinysrgb&w=1920)',
+            backgroundImage: 'url(/photoacc.jpeg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
