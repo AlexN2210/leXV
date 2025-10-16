@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Lock, LogOut, Package, CheckCircle, Clock, X, Settings, ShoppingBag, Download, Bell, TrendingUp, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { demanderPermissionNotifications, notifierNouvelleCommande, notifierNouveauContact, jouerSonNotification, envoyerNotification, afficherNotificationVisuelle } from '../lib/notifications';
+import { demanderPermissionNotifications, notifierNouvelleCommande, notifierNouveauContact, jouerSonNotification, envoyerNotification, afficherNotificationVisuelle, initialiserServiceWorker, envoyerNotificationViaSW } from '../lib/notifications';
 import { GestionAdmins } from '../components/admin/GestionAdmins';
 import { GestionArrets } from '../components/admin/GestionArrets';
 import { GestionHoraires } from '../components/admin/GestionHoraires';
@@ -49,6 +49,7 @@ export const Admin = () => {
   const [filter, setFilter] = useState<string>('tous');
   const [activeTab, setActiveTab] = useState<'commandes' | 'parametres' | 'financier'>('commandes');
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [serviceWorkerReady, setServiceWorkerReady] = useState(false);
   const commandesCountRef = useRef<number>(0);
   const contactsCountRef = useRef<number>(0);
 
@@ -113,6 +114,19 @@ export const Admin = () => {
 
   const initNotifications = async () => {
     console.log('🔔 Initialisation des notifications...');
+    
+    // Initialiser le Service Worker d'abord
+    console.log('🔧 Initialisation du Service Worker...');
+    const swInitialized = await initialiserServiceWorker();
+    setServiceWorkerReady(swInitialized);
+    
+    if (swInitialized) {
+      console.log('✅ Service Worker initialisé avec succès');
+    } else {
+      console.log('⚠️ Service Worker non initialisé - notifications limitées');
+    }
+    
+    // Puis demander les permissions
     const hasPermission = await demanderPermissionNotifications();
     console.log('🔔 Permission accordée:', hasPermission);
     setNotificationsEnabled(hasPermission);
@@ -623,6 +637,13 @@ export const Admin = () => {
                 <div className="bg-green-100 border-2 border-green-600 p-4 text-green-800">
                   <p className="font-semibold">✓ Notifications activées</p>
                   <p className="text-sm mt-2">Vous recevrez une alerte à chaque nouvelle commande ou demande de contact.</p>
+                  
+                  {serviceWorkerReady && (
+                    <div className="mt-3 p-3 bg-blue-100 border border-blue-300 rounded">
+                      <p className="text-sm font-semibold text-blue-800">🔧 Service Worker actif</p>
+                      <p className="text-xs text-blue-700">Notifications disponibles même téléphone verrouillé</p>
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-3 mt-3">
                     <button
                       onClick={async () => {
@@ -669,6 +690,26 @@ export const Admin = () => {
                       className="bg-purple-700 text-white px-4 py-2 font-semibold hover:bg-purple-800 text-sm"
                     >
                       Test Notification Visuelle
+                    </button>
+                    <button
+                      onClick={async () => {
+                        console.log('🧪 Test Service Worker...');
+                        const success = await envoyerNotificationViaSW('🧪 Test Service Worker', {
+                          body: 'Ceci est un test de notification via Service Worker (téléphone verrouillé)',
+                          tag: 'test-sw',
+                        });
+                        
+                        if (success) {
+                          console.log('✅ Notification Service Worker envoyée');
+                        } else {
+                          console.log('❌ Échec notification Service Worker');
+                        }
+                        
+                        jouerSonNotification();
+                      }}
+                      className="bg-orange-700 text-white px-4 py-2 font-semibold hover:bg-orange-800 text-sm"
+                    >
+                      Test Service Worker
                     </button>
                   </div>
                 </div>

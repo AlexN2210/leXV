@@ -1,5 +1,34 @@
 // Service de gestion des notifications push
 
+let serviceWorkerRegistration: ServiceWorkerRegistration | null = null;
+
+// Initialiser le Service Worker
+export const initialiserServiceWorker = async (): Promise<boolean> => {
+  if (!('serviceWorker' in navigator)) {
+    console.log('❌ Service Worker non supporté');
+    return false;
+  }
+
+  try {
+    console.log('🔧 Enregistrement du Service Worker...');
+    const registration = await navigator.serviceWorker.register('/sw-notifications.js', {
+      scope: '/'
+    });
+    
+    serviceWorkerRegistration = registration;
+    console.log('✅ Service Worker enregistré:', registration);
+    
+    // Attendre que le Service Worker soit prêt
+    await navigator.serviceWorker.ready;
+    console.log('✅ Service Worker prêt');
+    
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur Service Worker:', error);
+    return false;
+  }
+};
+
 export const demanderPermissionNotifications = async (): Promise<boolean> => {
   console.log('🔔 Vérification des permissions de notification...');
   
@@ -24,6 +53,44 @@ export const demanderPermissionNotifications = async (): Promise<boolean> => {
 
   console.log('❌ Permission refusée ou non disponible');
   return false;
+};
+
+// Envoyer une notification via le Service Worker (pour téléphone verrouillé)
+export const envoyerNotificationViaSW = async (titre: string, options?: NotificationOptions) => {
+  console.log('🔔 Envoi notification via Service Worker:', titre);
+  
+  if (!serviceWorkerRegistration) {
+    console.log('⚠️ Service Worker non initialisé, tentative d\'initialisation...');
+    const initialized = await initialiserServiceWorker();
+    if (!initialized) {
+      console.log('❌ Impossible d\'initialiser le Service Worker');
+      return false;
+    }
+  }
+
+  try {
+    // Envoyer un message au Service Worker
+    if (navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SHOW_NOTIFICATION',
+        title: titre,
+        options: {
+          body: options?.body || '',
+          tag: options?.tag || 'default',
+          data: options?.data || {},
+          ...options,
+        }
+      });
+      console.log('✅ Message envoyé au Service Worker');
+      return true;
+    } else {
+      console.log('⚠️ Service Worker controller non disponible');
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Erreur envoi via Service Worker:', error);
+    return false;
+  }
 };
 
 export const envoyerNotification = (titre: string, options?: NotificationOptions) => {
@@ -92,43 +159,65 @@ export const envoyerNotification = (titre: string, options?: NotificationOptions
   return null;
 };
 
-export const notifierNouvelleCommande = (clientNom: string, montant: number) => {
+export const notifierNouvelleCommande = async (clientNom: string, montant: number) => {
   console.log('🛒 Notification nouvelle commande:', clientNom, montant);
   
   const titre = '🛒 Nouvelle Commande !';
   const message = `${clientNom} vient de commander pour ${montant.toFixed(2)}€`;
   
-  // Essayer d'abord la notification native
-  const notification = envoyerNotification(titre, {
+  // Essayer d'abord la notification via Service Worker (pour téléphone verrouillé)
+  const swSuccess = await envoyerNotificationViaSW(titre, {
     body: message,
     tag: 'nouvelle-commande',
     requireInteraction: true,
   });
   
-  // Si la notification native échoue, utiliser l'alternative visuelle
-  if (!notification) {
-    console.log('📱 Utilisation de la notification visuelle alternative');
-    afficherNotificationVisuelle(titre, message);
+  if (swSuccess) {
+    console.log('✅ Notification envoyée via Service Worker');
+  } else {
+    // Fallback : notification native
+    const notification = envoyerNotification(titre, {
+      body: message,
+      tag: 'nouvelle-commande',
+      requireInteraction: true,
+    });
+    
+    // Si la notification native échoue aussi, utiliser l'alternative visuelle
+    if (!notification) {
+      console.log('📱 Utilisation de la notification visuelle alternative');
+      afficherNotificationVisuelle(titre, message);
+    }
   }
 };
 
-export const notifierNouveauContact = (nom: string, typeEvenement: string) => {
+export const notifierNouveauContact = async (nom: string, typeEvenement: string) => {
   console.log('📧 Notification nouveau contact:', nom, typeEvenement);
   
   const titre = '📧 Nouvelle Demande de Contact !';
   const message = `${nom} - ${typeEvenement}`;
   
-  // Essayer d'abord la notification native
-  const notification = envoyerNotification(titre, {
+  // Essayer d'abord la notification via Service Worker (pour téléphone verrouillé)
+  const swSuccess = await envoyerNotificationViaSW(titre, {
     body: message,
     tag: 'nouveau-contact',
     requireInteraction: true,
   });
   
-  // Si la notification native échoue, utiliser l'alternative visuelle
-  if (!notification) {
-    console.log('📱 Utilisation de la notification visuelle alternative');
-    afficherNotificationVisuelle(titre, message);
+  if (swSuccess) {
+    console.log('✅ Notification envoyée via Service Worker');
+  } else {
+    // Fallback : notification native
+    const notification = envoyerNotification(titre, {
+      body: message,
+      tag: 'nouveau-contact',
+      requireInteraction: true,
+    });
+    
+    // Si la notification native échoue aussi, utiliser l'alternative visuelle
+    if (!notification) {
+      console.log('📱 Utilisation de la notification visuelle alternative');
+      afficherNotificationVisuelle(titre, message);
+    }
   }
 };
 
