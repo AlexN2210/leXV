@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
-import { Lock, LogOut, Package, CheckCircle, Clock, X, Settings, ShoppingBag, Download, Bell, TrendingUp } from 'lucide-react';
+import { Lock, LogOut, Package, CheckCircle, Clock, X, Settings, ShoppingBag, Download, Bell, TrendingUp, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { demanderPermissionNotifications, notifierNouvelleCommande, notifierNouveauContact, jouerSonNotification, envoyerNotification } from '../lib/notifications';
 import { GestionAdmins } from '../components/admin/GestionAdmins';
 import { GestionArrets } from '../components/admin/GestionArrets';
 import { GestionHoraires } from '../components/admin/GestionHoraires';
@@ -67,12 +68,16 @@ export const Admin = () => {
         .on('postgres_changes', 
           { event: 'INSERT', schema: 'public', table: 'commandes' }, 
           (payload) => {
+            console.log('📦 Nouvelle commande détectée:', payload);
             fetchCommandes();
             // Notifier nouvelle commande
             if (notificationsEnabled && payload.new) {
               const commande = payload.new as any;
+              console.log('🔔 Envoi notification pour commande:', commande);
               notifierNouvelleCommande(commande.client_nom, commande.montant_total);
               jouerSonNotification();
+            } else {
+              console.log('⚠️ Notification non envoyée - notifications désactivées ou pas de données');
             }
           }
         )
@@ -84,11 +89,15 @@ export const Admin = () => {
         .on('postgres_changes', 
           { event: 'INSERT', schema: 'public', table: 'demandes_contact' }, 
           (payload) => {
+            console.log('📧 Nouveau contact détecté:', payload);
             // Notifier nouveau contact
             if (notificationsEnabled && payload.new) {
               const contact = payload.new as any;
+              console.log('🔔 Envoi notification pour contact:', contact);
               notifierNouveauContact(contact.nom, contact.type_evenement);
               jouerSonNotification();
+            } else {
+              console.log('⚠️ Notification contact non envoyée - notifications désactivées ou pas de données');
             }
           }
         )
@@ -103,8 +112,16 @@ export const Admin = () => {
   }, [user, notificationsEnabled]);
 
   const initNotifications = async () => {
+    console.log('🔔 Initialisation des notifications...');
     const hasPermission = await demanderPermissionNotifications();
+    console.log('🔔 Permission accordée:', hasPermission);
     setNotificationsEnabled(hasPermission);
+    
+    if (hasPermission) {
+      console.log('✅ Notifications activées avec succès');
+    } else {
+      console.log('❌ Notifications non activées - permission refusée');
+    }
   };
 
   const fetchCommandes = async () => {
@@ -163,6 +180,38 @@ export const Admin = () => {
     } catch (error) {
       console.error('Erreur lors de la mise à jour du statut:', error);
       alert('Erreur lors de la mise à jour du statut');
+    }
+  };
+
+  const handleDeleteCommande = async (commandeId: string) => {
+    const confirmed = window.confirm(
+      'Êtes-vous sûr de vouloir supprimer définitivement cette commande ? Cette action est irréversible.'
+    );
+    
+    if (!confirmed) return;
+
+    try {
+      // Supprimer d'abord les items de la commande (contrainte de clé étrangère)
+      const { error: itemsError } = await supabase
+        .from('commande_items')
+        .delete()
+        .eq('commande_id', commandeId);
+
+      if (itemsError) throw itemsError;
+
+      // Puis supprimer la commande
+      const { error: commandeError } = await supabase
+        .from('commandes')
+        .delete()
+        .eq('id', commandeId);
+
+      if (commandeError) throw commandeError;
+      
+      fetchCommandes();
+      alert('Commande supprimée avec succès.');
+    } catch (error) {
+      console.error('Erreur lors de la suppression de la commande:', error);
+      alert('Erreur lors de la suppression de la commande.');
     }
   };
 
@@ -527,6 +576,15 @@ export const Admin = () => {
                           Annuler
                         </button>
                       )}
+                      {(commande.statut === 'prete' || commande.statut === 'recuperee') && (
+                        <button
+                          onClick={() => handleDeleteCommande(commande.id)}
+                          className="flex items-center gap-2 bg-red-800 text-white px-6 py-3 font-semibold hover:bg-red-900 transition-colors"
+                        >
+                          <Trash2 size={20} />
+                          Supprimer
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -565,15 +623,31 @@ export const Admin = () => {
                 <div className="bg-green-100 border-2 border-green-600 p-4 text-green-800">
                   <p className="font-semibold">✓ Notifications activées</p>
                   <p className="text-sm mt-2">Vous recevrez une alerte à chaque nouvelle commande ou demande de contact.</p>
-                  <button
-                    onClick={async () => {
-                      const hasPermission = await demanderPermissionNotifications();
-                      setNotificationsEnabled(hasPermission);
-                    }}
-                    className="mt-3 bg-green-700 text-white px-4 py-2 font-semibold hover:bg-green-800 text-sm"
-                  >
-                    Vérifier les Permissions
-                  </button>
+                  <div className="flex gap-3 mt-3">
+                    <button
+                      onClick={async () => {
+                        const hasPermission = await demanderPermissionNotifications();
+                        setNotificationsEnabled(hasPermission);
+                      }}
+                      className="bg-green-700 text-white px-4 py-2 font-semibold hover:bg-green-800 text-sm"
+                    >
+                      Vérifier les Permissions
+                    </button>
+                    <button
+                      onClick={() => {
+                        console.log('🧪 Test de notification...');
+                        envoyerNotification('🧪 Test de Notification', {
+                          body: 'Ceci est un test de notification pour vérifier le bon fonctionnement',
+                          tag: 'test-notification',
+                          requireInteraction: true,
+                        });
+                        jouerSonNotification();
+                      }}
+                      className="bg-blue-700 text-white px-4 py-2 font-semibold hover:bg-blue-800 text-sm"
+                    >
+                      Tester Notification
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div>
