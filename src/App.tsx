@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider } from './contexts/AuthContext';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
@@ -49,6 +50,7 @@ function App() {
         <Header currentSection={currentSection} onSectionChange={setCurrentSection} />
         <main className="pt-20">{renderSection()}</main>
         <Footer currentSection={currentSection} onSectionChange={setCurrentSection} />
+        <Analytics />
       </div>
     </AuthProvider>
   );
