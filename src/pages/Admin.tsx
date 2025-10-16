@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Lock, LogOut, Package, CheckCircle, Clock, X, Settings, ShoppingBag, Download, Bell, TrendingUp, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { demanderPermissionNotifications, notifierNouvelleCommande, notifierNouveauContact, jouerSonNotification, envoyerNotification, afficherNotificationVisuelle, initialiserServiceWorker, envoyerNotificationViaSW } from '../lib/notifications';
+import { demanderPermissionNotifications, notifierNouvelleCommande, notifierNouveauContact, jouerSonNotification, initialiserServiceWorker } from '../lib/notifications';
 import { GestionAdmins } from '../components/admin/GestionAdmins';
 import { GestionArrets } from '../components/admin/GestionArrets';
 import { GestionHoraires } from '../components/admin/GestionHoraires';
@@ -644,7 +644,7 @@ export const Admin = () => {
                       <p className="text-xs text-blue-700">Notifications disponibles même téléphone verrouillé</p>
                     </div>
                   )}
-                  <div className="flex flex-wrap gap-3 mt-3">
+                  <div className="mt-3">
                     <button
                       onClick={async () => {
                         const hasPermission = await demanderPermissionNotifications();
@@ -653,63 +653,6 @@ export const Admin = () => {
                       className="bg-green-700 text-white px-4 py-2 font-semibold hover:bg-green-800 text-sm"
                     >
                       Vérifier les Permissions
-                    </button>
-                    <button
-                      onClick={() => {
-                        console.log('🧪 Test de notification native...');
-                        console.log('🧪 Permission actuelle:', Notification.permission);
-                        console.log('🧪 Support des notifications:', 'Notification' in window);
-                        
-                        // Test avec différentes options
-                        const testNotification = envoyerNotification('🧪 Test de Notification', {
-                          body: 'Ceci est un test de notification pour vérifier le bon fonctionnement',
-                          tag: 'test-notification',
-                          requireInteraction: true,
-                          silent: false,
-                          vibrate: [200, 100, 200, 100, 200],
-                        });
-                        
-                        if (testNotification) {
-                          console.log('✅ Notification de test créée');
-                        } else {
-                          console.log('❌ Échec de création de la notification de test');
-                        }
-                        
-                        jouerSonNotification();
-                      }}
-                      className="bg-blue-700 text-white px-4 py-2 font-semibold hover:bg-blue-800 text-sm"
-                    >
-                      Test Notification Native
-                    </button>
-                    <button
-                      onClick={() => {
-                        console.log('🧪 Test de notification visuelle...');
-                        afficherNotificationVisuelle('🧪 Test Visuel', 'Ceci est un test de notification visuelle dans l\'interface');
-                        jouerSonNotification();
-                      }}
-                      className="bg-purple-700 text-white px-4 py-2 font-semibold hover:bg-purple-800 text-sm"
-                    >
-                      Test Notification Visuelle
-                    </button>
-                    <button
-                      onClick={async () => {
-                        console.log('🧪 Test Service Worker...');
-                        const success = await envoyerNotificationViaSW('🧪 Test Service Worker', {
-                          body: 'Ceci est un test de notification via Service Worker (téléphone verrouillé)',
-                          tag: 'test-sw',
-                        });
-                        
-                        if (success) {
-                          console.log('✅ Notification Service Worker envoyée');
-                        } else {
-                          console.log('❌ Échec notification Service Worker');
-                        }
-                        
-                        jouerSonNotification();
-                      }}
-                      className="bg-orange-700 text-white px-4 py-2 font-semibold hover:bg-orange-800 text-sm"
-                    >
-                      Test Service Worker
                     </button>
                   </div>
                 </div>
