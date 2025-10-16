@@ -156,32 +156,42 @@ export const Footer = ({ currentSection, onSectionChange }: FooterProps) => {
                   </div>
 
                   <div>
-                    <h4 className="text-lg font-semibold mb-4 text-yellow-400">2. Commandes et Paiement</h4>
+                    <h4 className="text-lg font-semibold mb-4 text-yellow-400">2. Commandes et Retrait</h4>
                     <div className="text-sm text-gray-300 space-y-2">
                       <p><strong>Commandes :</strong> Les commandes peuvent être passées via le site web ou directement sur place.</p>
-                      <p><strong>Paiement :</strong> Espèces, carte bancaire, paiement mobile acceptés.</p>
-                      <p><strong>Prix :</strong> Tous les prix sont indiqués en euros TTC et peuvent être modifiés sans préavis.</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-lg font-semibold mb-4 text-yellow-400">3. Livraison et Retrait</h4>
-                    <div className="text-sm text-gray-300 space-y-2">
-                      <p><strong>Retrait sur place :</strong> Les commandes sont à retirer aux emplacements indiqués selon les horaires d'ouverture.</p>
+                      <p><strong>Retrait uniquement :</strong> Aucune livraison n'est proposée. Les commandes sont à retirer aux emplacements indiqués.</p>
                       <p><strong>Horaires :</strong> Mardi et Jeudi (18h-22h) - Place du marché aux raisins, Villeveynac</p>
                       <p><strong>Mercredi et Vendredi (18h-22h) - Complexe sportif des Baux, Poussan</strong></p>
                     </div>
                   </div>
 
                   <div>
-                    <h4 className="text-lg font-semibold mb-4 text-yellow-400">4. Droit de Rétractation</h4>
+                    <h4 className="text-lg font-semibold mb-4 text-yellow-400">3. Paiement</h4>
                     <div className="text-sm text-gray-300 space-y-2">
-                      <p>Conformément à l'article L. 221-28 du Code de la consommation, le droit de rétractation ne s'applique pas aux contrats de fourniture de biens alimentaires destinés à être livrés rapidement.</p>
+                      <p><strong>Paiement sur place :</strong> Le paiement s'effectue uniquement à la réception de la commande au food truck.</p>
+                      <p><strong>Moyens de paiement :</strong> Espèces, carte bancaire, paiement mobile acceptés.</p>
+                      <p><strong>Prix :</strong> Tous les prix sont indiqués en euros TTC et peuvent être modifiés sans préavis.</p>
                     </div>
                   </div>
 
                   <div>
-                    <h4 className="text-lg font-semibold mb-4 text-yellow-400">5. Responsabilité</h4>
+                    <h4 className="text-lg font-semibold mb-4 text-yellow-400">4. Droit de Rétractation</h4>
+                    <div className="text-sm text-gray-300 space-y-2">
+                      <p>Conformément à l'article L. 221-28 du Code de la consommation, le droit de rétractation ne s'applique pas aux contrats de fourniture de biens alimentaires destinés à être consommés rapidement.</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-lg font-semibold mb-4 text-yellow-400">5. Responsabilité du Client</h4>
+                    <div className="text-sm text-gray-300 space-y-2">
+                      <p><strong>Retrait des commandes :</strong> Le client s'engage à venir récupérer sa commande aux horaires et emplacements indiqués. En cas d'oubli de retrait, STEVE LE XV ne peut être tenu responsable de la détérioration des produits.</p>
+                      <p><strong>Vérification du lieu :</strong> Il appartient au client de vérifier l'emplacement exact du food truck. STEVE LE XV ne peut être tenu responsable des erreurs de lieu de retrait commises par le client.</p>
+                      <p><strong>Délai de retrait :</strong> Les commandes non récupérées dans les 30 minutes suivant l'heure de fermeture pourront être annulées sans remboursement.</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-lg font-semibold mb-4 text-yellow-400">6. Responsabilité de STEVE LE XV</h4>
                     <div className="text-sm text-gray-300 space-y-2">
                       <p>STEVE LE XV s'engage à fournir des produits de qualité. En cas de problème, contactez-nous au 06 85 84 30 20 ou par email à stevelexv@gmail.com</p>
                     </div>
