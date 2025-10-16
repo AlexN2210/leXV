@@ -52,16 +52,18 @@ export const Admin = () => {
   const [serviceWorkerReady, setServiceWorkerReady] = useState(false);
   const commandesCountRef = useRef<number>(0);
   const contactsCountRef = useRef<number>(0);
+  const lastCommandeIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (user) {
       fetchCommandes();
       initNotifications();
       
-      // Rafraîchissement automatique toutes les 10 secondes
+      // Rafraîchissement automatique toutes les 5 secondes pour détecter les nouvelles commandes
       const interval = setInterval(() => {
+        console.log('⏰ Vérification automatique des nouvelles commandes...');
         fetchCommandes();
-      }, 10000);
+      }, 5000);
 
       // Écouter les changements en temps réel pour les commandes
       console.log('🔧 Configuration du canal Supabase Realtime...');
@@ -186,6 +188,27 @@ export const Admin = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      // Vérifier s'il y a de nouvelles commandes
+      if (data && data.length > 0 && notificationsEnabled) {
+        const latestCommande = data[0];
+        console.log('🔍 Vérification nouvelles commandes...');
+        console.log('🔍 Dernière commande ID:', latestCommande.id);
+        console.log('🔍 ID stocké:', lastCommandeIdRef.current);
+        
+        if (lastCommandeIdRef.current && latestCommande.id !== lastCommandeIdRef.current) {
+          console.log('🆕 NOUVELLE COMMANDE DÉTECTÉE !');
+          console.log('🆕 Commande:', latestCommande);
+          
+          // Notifier la nouvelle commande
+          await notifierNouvelleCommande(latestCommande.client_nom, latestCommande.montant_total);
+          jouerSonNotification();
+        }
+        
+        // Mettre à jour l'ID de la dernière commande
+        lastCommandeIdRef.current = latestCommande.id;
+      }
+      
       setCommandes(data || []);
     } catch (error) {
       console.error('Erreur lors du chargement des commandes:', error);
@@ -717,6 +740,47 @@ export const Admin = () => {
                           className="bg-orange-600 text-white px-4 py-2 font-semibold hover:bg-orange-700 text-sm w-full"
                         >
                           Tester Notification Manuelle
+                        </button>
+                        
+                        <button
+                          onClick={async () => {
+                            console.log('🧪 Test avec vraie commande...');
+                            
+                            // Créer une commande de test dans la base de données
+                            try {
+                              const { data: arrets } = await supabase.from('arrets').select('id').limit(1);
+                              if (arrets && arrets.length > 0) {
+                                const { data: commande, error } = await supabase
+                                  .from('commandes')
+                                  .insert({
+                                    arret_id: arrets[0].id,
+                                    client_nom: 'Test Notification',
+                                    client_telephone: '0600000000',
+                                    client_email: 'test@example.com',
+                                    date_retrait: new Date().toISOString().split('T')[0],
+                                    heure_retrait: '18:00',
+                                    statut: 'en_attente',
+                                    montant_total: 15.50,
+                                  })
+                                  .select()
+                                  .single();
+                                
+                                if (error) {
+                                  console.error('❌ Erreur création commande test:', error);
+                                  alert('Erreur lors de la création de la commande test');
+                                } else {
+                                  console.log('✅ Commande test créée:', commande);
+                                  alert('Commande test créée ! Vérifiez si vous recevez une notification dans les 5 secondes.');
+                                }
+                              }
+                            } catch (error) {
+                              console.error('❌ Erreur test commande:', error);
+                              alert('Erreur lors du test');
+                            }
+                          }}
+                          className="bg-red-600 text-white px-4 py-2 font-semibold hover:bg-red-700 text-sm w-full"
+                        >
+                          Créer Commande Test
                         </button>
                       </div>
                     </div>
