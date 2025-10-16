@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Lock, LogOut, Package, CheckCircle, Clock, X, Settings, ShoppingBag, Download, Bell, TrendingUp, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { demanderPermissionNotifications, notifierNouvelleCommande, notifierNouveauContact, jouerSonNotification, envoyerNotification } from '../lib/notifications';
+import { demanderPermissionNotifications, notifierNouvelleCommande, notifierNouveauContact, jouerSonNotification, envoyerNotification, afficherNotificationVisuelle } from '../lib/notifications';
 import { GestionAdmins } from '../components/admin/GestionAdmins';
 import { GestionArrets } from '../components/admin/GestionArrets';
 import { GestionHoraires } from '../components/admin/GestionHoraires';
@@ -623,7 +623,7 @@ export const Admin = () => {
                 <div className="bg-green-100 border-2 border-green-600 p-4 text-green-800">
                   <p className="font-semibold">✓ Notifications activées</p>
                   <p className="text-sm mt-2">Vous recevrez une alerte à chaque nouvelle commande ou demande de contact.</p>
-                  <div className="flex gap-3 mt-3">
+                  <div className="flex flex-wrap gap-3 mt-3">
                     <button
                       onClick={async () => {
                         const hasPermission = await demanderPermissionNotifications();
@@ -635,17 +635,40 @@ export const Admin = () => {
                     </button>
                     <button
                       onClick={() => {
-                        console.log('🧪 Test de notification...');
-                        envoyerNotification('🧪 Test de Notification', {
+                        console.log('🧪 Test de notification native...');
+                        console.log('🧪 Permission actuelle:', Notification.permission);
+                        console.log('🧪 Support des notifications:', 'Notification' in window);
+                        
+                        // Test avec différentes options
+                        const testNotification = envoyerNotification('🧪 Test de Notification', {
                           body: 'Ceci est un test de notification pour vérifier le bon fonctionnement',
                           tag: 'test-notification',
                           requireInteraction: true,
+                          silent: false,
+                          vibrate: [200, 100, 200, 100, 200],
                         });
+                        
+                        if (testNotification) {
+                          console.log('✅ Notification de test créée');
+                        } else {
+                          console.log('❌ Échec de création de la notification de test');
+                        }
+                        
                         jouerSonNotification();
                       }}
                       className="bg-blue-700 text-white px-4 py-2 font-semibold hover:bg-blue-800 text-sm"
                     >
-                      Tester Notification
+                      Test Notification Native
+                    </button>
+                    <button
+                      onClick={() => {
+                        console.log('🧪 Test de notification visuelle...');
+                        afficherNotificationVisuelle('🧪 Test Visuel', 'Ceci est un test de notification visuelle dans l\'interface');
+                        jouerSonNotification();
+                      }}
+                      className="bg-purple-700 text-white px-4 py-2 font-semibold hover:bg-purple-800 text-sm"
+                    >
+                      Test Notification Visuelle
                     </button>
                   </div>
                 </div>
