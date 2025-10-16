@@ -57,6 +57,7 @@ export const Commander = () => {
     arretId: '',
     dateRetrait: '',
     heureRetrait: '',
+    clientPrenom: '',
     clientNom: '',
     clientTelephone: '',
     clientEmail: '',
@@ -187,6 +188,7 @@ export const Commander = () => {
         .from('commandes')
         .insert({
           arret_id: formData.arretId,
+          client_prenom: formData.clientPrenom,
           client_nom: formData.clientNom,
           client_telephone: formData.clientTelephone,
           client_email: formData.clientEmail,
@@ -215,6 +217,7 @@ export const Commander = () => {
 
       // Préparer les données pour l'email
       const emailData = {
+        clientPrenom: formData.clientPrenom,
         clientNom: formData.clientNom,
         clientEmail: formData.clientEmail,
         clientTelephone: formData.clientTelephone,
@@ -251,6 +254,7 @@ export const Commander = () => {
         arretId: '',
         dateRetrait: '',
         heureRetrait: '',
+        clientPrenom: '',
         clientNom: '',
         clientTelephone: '',
         clientEmail: '',
@@ -640,6 +644,19 @@ export const Commander = () => {
                       </p>
                     </div>
                   )}
+
+                  <div>
+                    <label className="block font-semibold mb-2">Prénom *</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.clientPrenom}
+                      onChange={(e) =>
+                        setFormData({ ...formData, clientPrenom: e.target.value })
+                      }
+                      className="w-full border-2 border-black p-3"
+                    />
+                  </div>
 
                   <div>
                     <label className="block font-semibold mb-2">Nom *</label>

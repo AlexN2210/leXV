@@ -75,7 +75,8 @@ export const Admin = () => {
             // Notifier nouvelle commande
             if (notificationsEnabled && payload.new) {
               const commande = payload.new as any;
-              notifierNouvelleCommande(commande.client_nom, commande.montant_total);
+              const nomComplet = commande.client_prenom ? `${commande.client_prenom} ${commande.client_nom}` : commande.client_nom;
+              notifierNouvelleCommande(nomComplet, commande.montant_total);
               jouerSonNotification();
             }
           }
@@ -470,7 +471,9 @@ export const Admin = () => {
                 {/* En-tête de la card */}
                 <div className="bg-black text-white p-4 flex justify-between items-center">
                   <div>
-                    <h3 className="text-2xl font-bold">{commande.client_nom}</h3>
+                    <h3 className="text-2xl font-bold">
+                      {commande.client_prenom ? `${commande.client_prenom} ${commande.client_nom}` : commande.client_nom}
+                    </h3>
                     <p className="text-sm text-gray-300">
                       Commande #{commande.id.substring(0, 8)}
                     </p>
@@ -489,6 +492,9 @@ export const Admin = () => {
                         👤 Informations Client
                       </h4>
                       <div className="space-y-2 text-sm">
+                        {commande.client_prenom && (
+                          <p><span className="font-semibold">Prénom:</span> {commande.client_prenom}</p>
+                        )}
                         <p><span className="font-semibold">Nom:</span> {commande.client_nom}</p>
                         <p><span className="font-semibold">Téléphone:</span> {commande.client_telephone}</p>
                         {commande.client_email && (

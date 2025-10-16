@@ -9,6 +9,7 @@ const EMAILJS_TEMPLATE_ID = 'template_commande';
 const EMAILJS_PUBLIC_KEY = 'your_public_key_here';
 
 interface CommandeEmail {
+  clientPrenom: string;
   clientNom: string;
   clientEmail: string;
   clientTelephone: string;
@@ -35,6 +36,7 @@ export const envoyerEmailConfirmation = async (commande: CommandeEmail): Promise
       .join('\n');
 
     const templateParams = {
+      client_prenom: commande.clientPrenom,
       client_nom: commande.clientNom,
       client_email: commande.clientEmail,
       client_telephone: commande.clientTelephone,
@@ -83,6 +85,7 @@ Numéro de commande: ${commande.numeroCommande}
 ─────────────────────────────────────
 
 CLIENT
+Prénom: ${commande.clientPrenom}
 Nom: ${commande.clientNom}
 Téléphone: ${commande.clientTelephone}
 ${commande.clientEmail ? `Email: ${commande.clientEmail}` : ''}
@@ -163,6 +166,8 @@ export const telechargerRecapitulatifPDF = (commande: CommandeEmail) => {
   
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
+  doc.text(`Prénom: ${commande.clientPrenom}`, margin, yPosition);
+  yPosition += 5;
   doc.text(`Nom: ${commande.clientNom}`, margin, yPosition);
   yPosition += 5;
   doc.text(`Téléphone: ${commande.clientTelephone}`, margin, yPosition);
