@@ -39,7 +39,15 @@ export const Footer = ({ currentSection, onSectionChange }: FooterProps) => {
         <div className="mt-8 pt-8 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm mb-4 md:mb-0">
-              &copy; {new Date().getFullYear()} Le XV. Tous droits réservés.
+              &copy; {new Date().getFullYear()} Le XV. Une création de{' '}
+              <a 
+                href="https://www.alexisdevfullstack.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-yellow-400 hover:text-yellow-300 underline transition-colors duration-300"
+              >
+                Alexisdevfullstack
+              </a>
             </p>
             <div className="flex gap-4">
               <button
