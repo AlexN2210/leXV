@@ -44,14 +44,32 @@ export const demanderPermissionNotifications = async (): Promise<boolean> => {
     return true;
   }
 
-  if (Notification.permission !== 'denied') {
-    console.log('🔔 Demande de permission...');
-    const permission = await Notification.requestPermission();
-    console.log('🔔 Permission accordée:', permission);
-    return permission === 'granted';
+  if (Notification.permission === 'default') {
+    console.log('🔔 Demande de permission (statut: default)...');
+    try {
+      const permission = await Notification.requestPermission();
+      console.log('🔔 Permission accordée:', permission);
+      
+      if (permission === 'granted') {
+        console.log('✅ Permission accordée avec succès');
+        return true;
+      } else {
+        console.log('❌ Permission refusée:', permission);
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la demande de permission:', error);
+      return false;
+    }
   }
 
-  console.log('❌ Permission refusée ou non disponible');
+  if (Notification.permission === 'denied') {
+    console.log('❌ Permission refusée par l\'utilisateur');
+    console.log('💡 Pour activer les notifications, allez dans les paramètres du navigateur');
+    return false;
+  }
+
+  console.log('❌ Statut de permission inconnu:', Notification.permission);
   return false;
 };
 
