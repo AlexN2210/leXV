@@ -147,6 +147,11 @@ export const Commander = () => {
     }
   };
 
+  const getCartItemQuantity = (menuItemId: string) => {
+    const item = cart.find((item) => item.menuItem.id === menuItemId);
+    return item ? item.quantite : 0;
+  };
+
   const updateQuantity = (menuItemId: string, change: number) => {
     setCart(
       cart
@@ -356,6 +361,27 @@ export const Commander = () => {
           </p>
         </div>
 
+        {/* Indicateur de panier mobile */}
+        {cart.length > 0 && (
+          <div className="lg:hidden fixed bottom-4 right-4 z-50">
+            <button
+              onClick={() => {
+                const panierElement = document.getElementById('panier-mobile');
+                if (panierElement) {
+                  panierElement.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="bg-black text-white p-4 rounded-full shadow-lg flex items-center gap-3 hover:bg-gray-800 transition-colors"
+            >
+              <ShoppingCart size={24} />
+              <div className="flex flex-col items-center">
+                <span className="font-bold text-lg">{cart.length} article{cart.length > 1 ? 's' : ''}</span>
+                <span className="font-bold text-sm">{calculateTotal().toFixed(2)}€</span>
+              </div>
+            </button>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <h2 className="text-3xl font-bold mb-6">Sélection des Plats</h2>
@@ -392,12 +418,32 @@ export const Commander = () => {
                             )}
                             <p className="font-bold mt-2">{item.prix.toFixed(2)}€</p>
                           </div>
-                          <button
-                            onClick={() => addToCart(item)}
-                            className="ml-4 bg-black text-white p-2 hover:bg-gray-800 transition-colors"
-                          >
-                            <Plus size={20} />
-                          </button>
+                          {getCartItemQuantity(item.id) === 0 ? (
+                            <button
+                              onClick={() => addToCart(item)}
+                              className="ml-4 bg-black text-white p-3 hover:bg-gray-800 transition-colors rounded-lg"
+                            >
+                              <Plus size={24} />
+                            </button>
+                          ) : (
+                            <div className="ml-4 flex items-center gap-3">
+                              <button
+                                onClick={() => updateQuantity(item.id, -1)}
+                                className="bg-gray-600 text-white w-10 h-10 flex items-center justify-center hover:bg-gray-700 transition-colors rounded-lg"
+                              >
+                                <Minus size={20} />
+                              </button>
+                              <span className="font-bold text-xl min-w-[32px] text-center">
+                                {getCartItemQuantity(item.id)}
+                              </span>
+                              <button
+                                onClick={() => updateQuantity(item.id, 1)}
+                                className="bg-black text-white w-10 h-10 flex items-center justify-center hover:bg-gray-800 transition-colors rounded-lg"
+                              >
+                                <Plus size={20} />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -409,8 +455,11 @@ export const Commander = () => {
 
           <div className="lg:col-span-1">
             <div className="sticky top-24">
-              <div className="bg-black text-white p-6 mb-6">
-                <h2 className="text-2xl font-bold mb-4">Panier</h2>
+              <div id="panier-mobile" className="bg-black text-white p-6 mb-6 rounded-lg shadow-lg">
+                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                  <ShoppingCart size={24} />
+                  Panier
+                </h2>
                 {cart.length === 0 ? (
                   <p className="text-gray-400">Votre panier est vide</p>
                 ) : (
@@ -419,31 +468,31 @@ export const Commander = () => {
                       {cart.map((item) => (
                         <div key={item.menuItem.id} className="border-b border-gray-700 pb-4">
                           <div className="flex justify-between items-start mb-2">
-                            <span className="font-semibold">{item.menuItem.nom}</span>
+                            <span className="font-semibold text-lg">{item.menuItem.nom}</span>
                             <button
                               onClick={() => removeFromCart(item.menuItem.id)}
-                              className="text-gray-400 hover:text-white"
+                              className="text-gray-400 hover:text-white p-1"
                             >
-                              <Trash2 size={18} />
+                              <Trash2 size={20} />
                             </button>
                           </div>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <button
                                 onClick={() => updateQuantity(item.menuItem.id, -1)}
-                                className="bg-white text-black w-8 h-8 flex items-center justify-center hover:bg-gray-200"
+                                className="bg-white text-black w-10 h-10 flex items-center justify-center hover:bg-gray-200 rounded-lg"
                               >
-                                <Minus size={16} />
+                                <Minus size={18} />
                               </button>
-                              <span className="font-bold">{item.quantite}</span>
+                              <span className="font-bold text-xl min-w-[32px] text-center">{item.quantite}</span>
                               <button
                                 onClick={() => updateQuantity(item.menuItem.id, 1)}
-                                className="bg-white text-black w-8 h-8 flex items-center justify-center hover:bg-gray-200"
+                                className="bg-white text-black w-10 h-10 flex items-center justify-center hover:bg-gray-200 rounded-lg"
                               >
-                                <Plus size={16} />
+                                <Plus size={18} />
                               </button>
                             </div>
-                            <span className="font-bold">
+                            <span className="font-bold text-lg">
                               {(item.menuItem.prix * item.quantite).toFixed(2)}€
                             </span>
                           </div>
