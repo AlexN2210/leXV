@@ -30,58 +30,31 @@ export const initialiserServiceWorker = async (): Promise<boolean> => {
 };
 
 export const demanderPermissionNotifications = async (): Promise<boolean> => {
-  console.log('🔔 Vérification des permissions de notification...');
-  
   if (!('Notification' in window)) {
-    console.log('❌ Les notifications ne sont pas supportées par ce navigateur');
     return false;
   }
 
-  console.log('🔔 Permission actuelle:', Notification.permission);
-
   if (Notification.permission === 'granted') {
-    console.log('✅ Permission déjà accordée');
     return true;
   }
 
   if (Notification.permission === 'default') {
-    console.log('🔔 Demande de permission (statut: default)...');
     try {
       const permission = await Notification.requestPermission();
-      console.log('🔔 Permission accordée:', permission);
-      
-      if (permission === 'granted') {
-        console.log('✅ Permission accordée avec succès');
-        return true;
-      } else {
-        console.log('❌ Permission refusée:', permission);
-        return false;
-      }
+      return permission === 'granted';
     } catch (error) {
-      console.error('❌ Erreur lors de la demande de permission:', error);
       return false;
     }
   }
 
-  if (Notification.permission === 'denied') {
-    console.log('❌ Permission refusée par l\'utilisateur');
-    console.log('💡 Pour activer les notifications, allez dans les paramètres du navigateur');
-    return false;
-  }
-
-  console.log('❌ Statut de permission inconnu:', Notification.permission);
   return false;
 };
 
 // Envoyer une notification via le Service Worker (pour téléphone verrouillé)
 export const envoyerNotificationViaSW = async (titre: string, options?: NotificationOptions) => {
-  console.log('🔔 Envoi notification via Service Worker:', titre);
-  
   if (!serviceWorkerRegistration) {
-    console.log('⚠️ Service Worker non initialisé, tentative d\'initialisation...');
     const initialized = await initialiserServiceWorker();
     if (!initialized) {
-      console.log('❌ Impossible d\'initialiser le Service Worker');
       return false;
     }
   }
@@ -99,23 +72,15 @@ export const envoyerNotificationViaSW = async (titre: string, options?: Notifica
           ...options,
         }
       });
-      console.log('✅ Message envoyé au Service Worker');
       return true;
-    } else {
-      console.log('⚠️ Service Worker controller non disponible');
-      return false;
     }
+    return false;
   } catch (error) {
-    console.error('❌ Erreur envoi via Service Worker:', error);
     return false;
   }
 };
 
 export const envoyerNotification = (titre: string, options?: NotificationOptions) => {
-  console.log('🔔 Tentative d\'envoi de notification:', titre);
-  console.log('🔔 Permission actuelle:', Notification.permission);
-  console.log('🔔 User Agent:', navigator.userAgent);
-  
   if (Notification.permission === 'granted') {
     try {
       // Options optimisées pour mobile
@@ -131,55 +96,36 @@ export const envoyerNotification = (titre: string, options?: NotificationOptions
 
       // Détecter si on est sur mobile
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      console.log('🔔 Détection mobile:', isMobile);
 
       if (isMobile) {
         // Options spécifiques pour mobile
         notificationOptions.vibrate = [200, 100, 200, 100, 200];
         notificationOptions.requireInteraction = true;
         notificationOptions.silent = false;
-        console.log('🔔 Options mobile appliquées');
       }
 
       const notification = new Notification(titre, notificationOptions);
 
-      console.log('✅ Notification créée avec succès');
-      console.log('🔔 Options utilisées:', notificationOptions);
-
       // Gestion des événements de notification
       notification.onclick = () => {
-        console.log('🔔 Notification cliquée');
         window.focus();
         notification.close();
       };
 
-      notification.onshow = () => {
-        console.log('🔔 Notification affichée');
-      };
-
-      notification.onerror = (error) => {
-        console.error('❌ Erreur de notification:', error);
-      };
-
-      // Fermer automatiquement après 15 secondes (plus long pour mobile)
+      // Fermer automatiquement après 15 secondes
       setTimeout(() => {
         notification.close();
-        console.log('🔔 Notification fermée automatiquement');
       }, 15000);
 
       return notification;
     } catch (error) {
-      console.error('❌ Erreur lors de l\'envoi de la notification:', error);
+      console.error('Erreur lors de l\'envoi de la notification:', error);
     }
-  } else {
-    console.warn('⚠️ Permission de notification non accordée:', Notification.permission);
   }
   return null;
 };
 
 export const notifierNouvelleCommande = async (clientNom: string, montant: number) => {
-  console.log('🛒 Notification nouvelle commande:', clientNom, montant);
-  
   const titre = '🛒 Nouvelle Commande !';
   const message = `${clientNom} vient de commander pour ${montant.toFixed(2)}€`;
   
@@ -190,9 +136,7 @@ export const notifierNouvelleCommande = async (clientNom: string, montant: numbe
     requireInteraction: true,
   });
   
-  if (swSuccess) {
-    console.log('✅ Notification envoyée via Service Worker');
-  } else {
+  if (!swSuccess) {
     // Fallback : notification native
     const notification = envoyerNotification(titre, {
       body: message,
@@ -202,15 +146,12 @@ export const notifierNouvelleCommande = async (clientNom: string, montant: numbe
     
     // Si la notification native échoue aussi, utiliser l'alternative visuelle
     if (!notification) {
-      console.log('📱 Utilisation de la notification visuelle alternative');
       afficherNotificationVisuelle(titre, message);
     }
   }
 };
 
 export const notifierNouveauContact = async (nom: string, typeEvenement: string) => {
-  console.log('📧 Notification nouveau contact:', nom, typeEvenement);
-  
   const titre = '📧 Nouvelle Demande de Contact !';
   const message = `${nom} - ${typeEvenement}`;
   
@@ -221,9 +162,7 @@ export const notifierNouveauContact = async (nom: string, typeEvenement: string)
     requireInteraction: true,
   });
   
-  if (swSuccess) {
-    console.log('✅ Notification envoyée via Service Worker');
-  } else {
+  if (!swSuccess) {
     // Fallback : notification native
     const notification = envoyerNotification(titre, {
       body: message,
@@ -233,14 +172,12 @@ export const notifierNouveauContact = async (nom: string, typeEvenement: string)
     
     // Si la notification native échoue aussi, utiliser l'alternative visuelle
     if (!notification) {
-      console.log('📱 Utilisation de la notification visuelle alternative');
       afficherNotificationVisuelle(titre, message);
     }
   }
 };
 
 export const jouerSonNotification = () => {
-  console.log('🔊 Lecture du son de notification...');
   try {
     // Créer un son simple pour attirer l'attention
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -258,15 +195,13 @@ export const jouerSonNotification = () => {
 
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.5);
-    console.log('✅ Son de notification joué');
   } catch (error) {
-    console.error('❌ Erreur lors de la lecture du son:', error);
+    // Son optionnel, pas d'erreur critique
   }
 };
 
 // Alternative pour mobile : notification visuelle dans l'interface
 export const afficherNotificationVisuelle = (titre: string, message: string) => {
-  console.log('📱 Affichage de notification visuelle:', titre, message);
   
   // Créer un élément de notification visuelle
   const notificationElement = document.createElement('div');

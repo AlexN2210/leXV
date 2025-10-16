@@ -61,42 +61,26 @@ export const Admin = () => {
       
       // Rafraîchissement automatique toutes les 5 secondes pour détecter les nouvelles commandes
       const interval = setInterval(() => {
-        console.log('⏰ Vérification automatique des nouvelles commandes...');
         fetchCommandes();
       }, 5000);
 
       // Écouter les changements en temps réel pour les commandes
-      console.log('🔧 Configuration du canal Supabase Realtime...');
       const commandesChannel = supabase
         .channel('commandes-changes')
         .on('postgres_changes', 
           { event: 'INSERT', schema: 'public', table: 'commandes' }, 
           (payload) => {
-            console.log('📦 Nouvelle commande détectée:', payload);
-            console.log('🔔 Notifications activées:', notificationsEnabled);
-            console.log('🔔 Données payload.new:', payload.new);
-            
             fetchCommandes();
             
             // Notifier nouvelle commande
             if (notificationsEnabled && payload.new) {
               const commande = payload.new as any;
-              console.log('🔔 Envoi notification pour commande:', commande);
-              console.log('🔔 Nom client:', commande.client_nom);
-              console.log('🔔 Montant:', commande.montant_total);
-              
               notifierNouvelleCommande(commande.client_nom, commande.montant_total);
               jouerSonNotification();
-            } else {
-              console.log('⚠️ Notification non envoyée - notifications désactivées ou pas de données');
-              console.log('⚠️ notificationsEnabled:', notificationsEnabled);
-              console.log('⚠️ payload.new:', payload.new);
             }
           }
         )
-        .subscribe((status) => {
-          console.log('📡 Statut souscription commandes:', status);
-        });
+        .subscribe();
 
       // Écouter les changements en temps réel pour les contacts
       const contactsChannel = supabase
@@ -104,15 +88,11 @@ export const Admin = () => {
         .on('postgres_changes', 
           { event: 'INSERT', schema: 'public', table: 'demandes_contact' }, 
           (payload) => {
-            console.log('📧 Nouveau contact détecté:', payload);
             // Notifier nouveau contact
             if (notificationsEnabled && payload.new) {
               const contact = payload.new as any;
-              console.log('🔔 Envoi notification pour contact:', contact);
               notifierNouveauContact(contact.nom, contact.type_evenement);
               jouerSonNotification();
-            } else {
-              console.log('⚠️ Notification contact non envoyée - notifications désactivées ou pas de données');
             }
           }
         )
@@ -127,46 +107,13 @@ export const Admin = () => {
   }, [user, notificationsEnabled]);
 
   const initNotifications = async () => {
-    console.log('🔔 Initialisation des notifications...');
-    
-    // Vérifier la configuration Supabase
-    console.log('🔧 Vérification configuration Supabase...');
-    console.log('🔧 URL Supabase:', supabase.supabaseUrl);
-    console.log('🔧 Clé Supabase:', supabase.supabaseKey ? 'Présente' : 'Manquante');
-    
-    // Tester la connexion Supabase
-    try {
-      const { data, error } = await supabase.from('commandes').select('count').limit(1);
-      if (error) {
-        console.error('❌ Erreur connexion Supabase:', error);
-      } else {
-        console.log('✅ Connexion Supabase OK');
-      }
-    } catch (error) {
-      console.error('❌ Erreur test Supabase:', error);
-    }
-    
-    // Initialiser le Service Worker d'abord
-    console.log('🔧 Initialisation du Service Worker...');
+    // Initialiser le Service Worker
     const swInitialized = await initialiserServiceWorker();
     setServiceWorkerReady(swInitialized);
     
-    if (swInitialized) {
-      console.log('✅ Service Worker initialisé avec succès');
-    } else {
-      console.log('⚠️ Service Worker non initialisé - notifications limitées');
-    }
-    
-    // Puis demander les permissions
+    // Demander les permissions
     const hasPermission = await demanderPermissionNotifications();
-    console.log('🔔 Permission accordée:', hasPermission);
     setNotificationsEnabled(hasPermission);
-    
-    if (hasPermission) {
-      console.log('✅ Notifications activées avec succès');
-    } else {
-      console.log('❌ Notifications non activées - permission refusée');
-    }
   };
 
   const fetchCommandes = async () => {
@@ -192,14 +139,8 @@ export const Admin = () => {
       // Vérifier s'il y a de nouvelles commandes
       if (data && data.length > 0 && notificationsEnabled) {
         const latestCommande = data[0];
-        console.log('🔍 Vérification nouvelles commandes...');
-        console.log('🔍 Dernière commande ID:', latestCommande.id);
-        console.log('🔍 ID stocké:', lastCommandeIdRef.current);
         
         if (lastCommandeIdRef.current && latestCommande.id !== lastCommandeIdRef.current) {
-          console.log('🆕 NOUVELLE COMMANDE DÉTECTÉE !');
-          console.log('🆕 Commande:', latestCommande);
-          
           // Notifier la nouvelle commande
           await notifierNouvelleCommande(latestCommande.client_nom, latestCommande.montant_total);
           jouerSonNotification();
@@ -707,83 +648,6 @@ export const Admin = () => {
                       Vérifier les Permissions
                     </button>
                     
-                    <div className="border-t pt-3">
-                      <p className="text-sm font-semibold mb-2">🔧 Actions</p>
-                      <div className="space-y-2">
-                        <button
-                          onClick={async () => {
-                            console.log('🔔 Demande forcée de permissions...');
-                            const hasPermission = await demanderPermissionNotifications();
-                            setNotificationsEnabled(hasPermission);
-                            
-                            if (hasPermission) {
-                              alert('✅ Permissions accordées ! Les notifications sont maintenant activées.');
-                            } else {
-                              alert('❌ Permissions refusées. Vérifiez les paramètres de votre navigateur.');
-                            }
-                          }}
-                          className="bg-blue-600 text-white px-4 py-2 font-semibold hover:bg-blue-700 text-sm w-full"
-                        >
-                          Forcer Demande Permissions
-                        </button>
-                        
-                        <button
-                          onClick={async () => {
-                            console.log('🧪 Test manuel de notification...');
-                            console.log('🧪 Notifications activées:', notificationsEnabled);
-                            console.log('🧪 Service Worker prêt:', serviceWorkerReady);
-                            
-                            // Test direct de la fonction de notification
-                            await notifierNouvelleCommande('Test Client', 25.50);
-                            jouerSonNotification();
-                          }}
-                          className="bg-orange-600 text-white px-4 py-2 font-semibold hover:bg-orange-700 text-sm w-full"
-                        >
-                          Tester Notification Manuelle
-                        </button>
-                        
-                        <button
-                          onClick={async () => {
-                            console.log('🧪 Test avec vraie commande...');
-                            
-                            // Créer une commande de test dans la base de données
-                            try {
-                              const { data: arrets } = await supabase.from('arrets').select('id').limit(1);
-                              if (arrets && arrets.length > 0) {
-                                const { data: commande, error } = await supabase
-                                  .from('commandes')
-                                  .insert({
-                                    arret_id: arrets[0].id,
-                                    client_nom: 'Test Notification',
-                                    client_telephone: '0600000000',
-                                    client_email: 'test@example.com',
-                                    date_retrait: new Date().toISOString().split('T')[0],
-                                    heure_retrait: '18:00',
-                                    statut: 'en_attente',
-                                    montant_total: 15.50,
-                                  })
-                                  .select()
-                                  .single();
-                                
-                                if (error) {
-                                  console.error('❌ Erreur création commande test:', error);
-                                  alert('Erreur lors de la création de la commande test');
-                                } else {
-                                  console.log('✅ Commande test créée:', commande);
-                                  alert('Commande test créée ! Vérifiez si vous recevez une notification dans les 5 secondes.');
-                                }
-                              }
-                            } catch (error) {
-                              console.error('❌ Erreur test commande:', error);
-                              alert('Erreur lors du test');
-                            }
-                          }}
-                          className="bg-red-600 text-white px-4 py-2 font-semibold hover:bg-red-700 text-sm w-full"
-                        >
-                          Créer Commande Test
-                        </button>
-                      </div>
-                    </div>
                   </div>
                 </div>
               ) : (
